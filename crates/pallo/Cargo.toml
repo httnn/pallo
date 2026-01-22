@@ -1,0 +1,73 @@
+[package]
+name = "pallo"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Max Huttunen"]
+description = "An uncomplicated and flexible UI library."
+
+[dependencies]
+anyhow = "1.0.83"
+keyboard-types = "0.6.2"
+parking_lot = "0.12"
+rustc-hash = "2.0.0"
+wasm-bindgen = "0.2.108"
+web-sys = { version = "0.3.69", features = ["Navigator", "Clipboard", "ClipboardItem", "WorkerGlobalScope"] }
+web-time = "1.1.0"
+palette = "0.7.5"
+pallo_macro = { path = "../pallo_macro" }
+pallo-util = { path = "../pallo_util" }
+
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
+open = "5.3.0"
+# nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+# nih_plug = { path = "../../../nih-plug" }
+# baseview = { git = "https://github.com/RustAudio/baseview" }
+# baseview = { path = "../../../baseview" }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+skia-safe = { version = "0.90.0", features = ["metal"] }
+objc2-metal = "0.3.0"
+objc2-foundation = "0.3.0"
+objc2-metal-kit = "0.3.0"
+objc2-core-foundation = "0.3.0"
+objc2-quartz-core = "0.3.0"
+objc2 = "0.6.0"
+block2 = "0.6.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3.0", features = ["NSPasteboard", "objc2-uniform-type-identifiers"] }
+objc2-uniform-type-identifiers = { version = "0.3.0" }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2-ui-kit = { version = "0.3.0", features = ["objc2-uniform-type-identifiers", "UIDragSession"] }
+objc2-uniform-type-identifiers = { version = "0.3.0" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+arboard = "3.4.0"
+skia-safe = { version = "0.90.0", features = ["d3d"] }
+rfd = { version = "0.15.1", default-features = false, features = ["xdg-portal"] }
+windows = { version = "0.62.0", features = [
+    "Win32",
+    "Win32_Graphics",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Direct3D12",
+    "Win32_Graphics_Direct3D",
+    "Win32_Foundation",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_UI",
+    "Win32_UI_HiDpi",
+    "Win32_Graphics_DirectComposition",
+    "Win32_System_DataExchange",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+    "Win32_System_Memory",
+    "Win32_System_Threading",
+    "Win32_Security",
+    "Win32_System_Ole"
+] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+serde = "1.0"
+wasm-bindgen-futures = "0.4.49"
+js-sys = "0.3.63"

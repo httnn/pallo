@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/pallo",
+  "crates/pallo_util",
+  "crates/pallo"
+]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
