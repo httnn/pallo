@@ -247,6 +247,17 @@ fn get_hardware_adapter(factory: &IDXGIFactory2) -> Result<IDXGIAdapter1> {
     unreachable!()
 }
 
+pub struct Frame {
+    surface: Surface,
+    surface_index: usize,
+}
+
+impl super::Frame for Frame {
+    fn canvas(&mut self) -> crate::Canvas<'_> {
+        crate::Canvas::new(self.surface.canvas())
+    }
+}
+
 const BUFFER_COUNT: u32 = 2;
 
 pub struct Platform {
@@ -257,7 +268,7 @@ pub struct Platform {
     swap_chain_waitable: HANDLE,
     pub command_queue: ID3D12CommandQueue,
     buffers: Vec<ID3D12Resource>,
-    surfaces: Vec<Surface>,
+    surfaces: Vec<Option<Surface>>,
     fence_values: Vec<u64>,
     fence: ID3D12Fence,
     fence_event: HANDLE,
@@ -367,12 +378,40 @@ impl PlatformCommon for Platform {
 
     fn open_prompt(
         &self,
-        title: String,
-        enter_text: String,
-        value: String,
-        input_type: super::InputType,
-        result: &crate::Later<String>,
+        _title: String,
+        _enter_text: String,
+        _value: String,
+        _input_type: super::InputType,
+        _result: &crate::Later<String>,
     ) {
+    }
+
+    type Frame = Frame;
+
+    fn new_frame(&mut self) -> Option<Self::Frame> {
+        // Only block the cpu when whe actually need to draw to the canvas
+        if self.frame_swapped {
+            self.move_to_next_frame();
+        }
+        if let Some(mut surface) = self.surfaces[self.frame_index].take() {
+            surface.canvas().save();
+            Some(Frame {
+                surface,
+                surface_index: self.frame_index,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn end_frame(&mut self, mut frame: Self::Frame) {
+        frame.surface.canvas().restore();
+        self.surfaces[frame.surface_index] = Some(frame.surface);
+        // {
+        //     tracy_gpu_zone!("wait for vsync");
+        //     vsync.wait_for_vsync();
+        // }
+        self.swap_buffers();
     }
 }
 
@@ -572,7 +611,7 @@ impl Platform {
                 None,
             )
             .expect("Could not create backend render target");
-            self.surfaces.push(surface);
+            self.surfaces.push(Some(surface));
         }
         self.frame_index = unsafe { self.swap_chain.GetCurrentBackBufferIndex() as usize };
     }
@@ -632,33 +671,19 @@ impl Platform {
             // Switch the back buffer resource state to present For some reason the
             // DirectContext::flush_and_submit does not do that for us automatically.
             let buffer_index = self.swap_chain.GetCurrentBackBufferIndex() as usize;
-            self.gr_context.flush_surface_with_access(
-                &mut self.surfaces[buffer_index],
-                BackendSurfaceAccess::Present,
-                &FlushInfo::default(),
-            );
-            self.gr_context.submit(Some(SyncCpu::No));
+            if let Some(surface) = &mut self.surfaces[buffer_index] {
+                self.gr_context.flush_surface_with_access(
+                    surface,
+                    BackendSurfaceAccess::Present,
+                    &FlushInfo::default(),
+                );
+                self.gr_context.submit(Some(SyncCpu::No));
 
-            if self.swap_chain.Present(1, DXGI_PRESENT(0)).is_ok() {
-                self.frame_swapped = true;
+                if self.swap_chain.Present(1, DXGI_PRESENT(0)).is_ok() {
+                    self.frame_swapped = true;
+                }
             }
         }
-    }
-
-    pub fn on_frame(&mut self, draw: impl FnOnce(&mut Surface)) {
-        // Only block the cpu when whe actually need to draw to the canvas
-        if self.frame_swapped {
-            self.move_to_next_frame();
-        }
-        let surface = &mut self.surfaces[self.frame_index];
-        surface.canvas().save();
-        (draw)(surface);
-        surface.canvas().restore();
-        // {
-        //     tracy_gpu_zone!("wait for vsync");
-        //     vsync.wait_for_vsync();
-        // }
-        self.swap_buffers();
     }
 }
 
