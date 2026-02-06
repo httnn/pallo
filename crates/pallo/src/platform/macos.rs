@@ -94,9 +94,11 @@ impl Clipboard for MacOsClipboard {
             let t = NSString::from_str("public.file-url");
             let mut out = vec![];
             for i in items {
-                if let Some(str) = i.stringForType(&t) {
-                    let url = NSURL::URLWithString(&str).unwrap();
-                    out.push(PathBuf::from(url.path().unwrap().to_string()));
+                if let Some(str) = i.stringForType(&t)
+                    && let Some(url) = NSURL::URLWithString(&str)
+                    && let Some(path) = url.path()
+                {
+                    out.push(PathBuf::from(path.to_string()));
                 }
             }
             if out.is_empty() { None } else { Some(out) }
@@ -133,62 +135,68 @@ impl PlatformCommon for Platform {
     }
 
     fn file_open_dialog(&self, opts: FileOpenOptions) {
-        let mtm = MainThreadMarker::new().expect("Should be called from main thread.");
-        let panel = Arc::new(NSOpenPanel::new(mtm));
-        panel.setCanChooseFiles(opts.files);
-        panel.setCanChooseDirectories(opts.folder);
-        panel.setAllowsMultipleSelection(opts.multi);
-        panel.setTitle(Some(&NSString::from_str(&opts.filetype_desc)));
-        panel.setAllowedContentTypes(&NSArray::from_retained_slice(
-            opts.extensions
-                .into_iter()
-                .filter_map(|s| UTType::typeWithFilenameExtension(&NSString::from_str(&s)))
-                .map(|s| s.retain())
-                .collect::<Vec<Retained<UTType>>>()
-                .as_slice(),
-        ));
-        let result_panel = panel.clone();
-        panel.beginSheetModalForWindow_completionHandler(
-            &self.ns_view.window().unwrap(),
-            &RcBlock::new(move |response| {
-                if response == NSModalResponseOK {
-                    opts.result.set(
-                        result_panel
-                            .URLs()
-                            .into_iter()
-                            .filter_map(|u| u.path().map(|p| p.to_string()))
-                            .map(|s| File::from_path_buf(PathBuf::from(s)))
-                            .collect(),
-                    );
-                }
-            }),
-        );
+        if let Some(mtm) = MainThreadMarker::new() {
+            let panel = Arc::new(NSOpenPanel::new(mtm));
+            panel.setCanChooseFiles(opts.files);
+            panel.setCanChooseDirectories(opts.folder);
+            panel.setAllowsMultipleSelection(opts.multi);
+            panel.setTitle(Some(&NSString::from_str(&opts.filetype_desc)));
+            panel.setAllowedContentTypes(&NSArray::from_retained_slice(
+                opts.extensions
+                    .into_iter()
+                    .filter_map(|s| UTType::typeWithFilenameExtension(&NSString::from_str(&s)))
+                    .map(|s| s.retain())
+                    .collect::<Vec<Retained<UTType>>>()
+                    .as_slice(),
+            ));
+            let result_panel = panel.clone();
+            if let Some(window) = self.ns_view.window() {
+                panel.beginSheetModalForWindow_completionHandler(
+                    &window,
+                    &RcBlock::new(move |response| {
+                        if response == NSModalResponseOK {
+                            opts.result.set(
+                                result_panel
+                                    .URLs()
+                                    .into_iter()
+                                    .filter_map(|u| u.path().map(|p| p.to_string()))
+                                    .map(|s| File::from_path_buf(PathBuf::from(s)))
+                                    .collect(),
+                            );
+                        }
+                    }),
+                );
+            }
+        }
     }
 
     fn file_save_dialog(&self, opts: FileSaveOptions) {
-        let mtm = MainThreadMarker::new().expect("Should be called from main thread.");
-        let panel = NSSavePanel::new(mtm);
-        panel.setAllowedContentTypes(&NSArray::from_retained_slice(&[UTType::typeWithFilenameExtension(
-            &NSString::from_str(&opts.extension),
-        )
-        .expect("Can't convert extension to UTType.")]));
-        panel.setNameFieldStringValue(&NSString::from_str(&opts.filename));
-        let result_panel = panel.clone();
-        panel.beginSheetModalForWindow_completionHandler(
-            &self.ns_view.window().unwrap(),
-            &RcBlock::new(move |response| {
-                if response == NSModalResponseOK
-                    && let Some(url) = result_panel.URL()
-                    && let Some(path) = url.path()
-                {
-                    let path = PathBuf::from(path.to_string());
-                    let _ = std::fs::write(&path, &*opts.data);
-                    if let Some(result) = &opts.result {
-                        result.set(path);
-                    }
-                }
-            }),
-        );
+        if let Some(mtm) = MainThreadMarker::new() {
+            let panel = NSSavePanel::new(mtm);
+            panel.setAllowedContentTypes(&NSArray::from_retained_slice(&[UTType::typeWithFilenameExtension(
+                &NSString::from_str(&opts.extension),
+            )
+            .expect("Can't convert extension to UTType.")]));
+            panel.setNameFieldStringValue(&NSString::from_str(&opts.filename));
+            let result_panel = panel.clone();
+            if let Some(window) = self.ns_view.window() {
+                panel.beginSheetModalForWindow_completionHandler(
+                    &window,
+                    &RcBlock::new(move |response| {
+                        if response == NSModalResponseOK
+                            && let Some(url) = result_panel.URL()
+                            && let Some(path) = url.path()
+                        {
+                            let path = PathBuf::from(path.to_string());
+                            let _ = std::fs::write(&path, &*opts.data);
+                            if let Some(result) = &opts.result {
+                                result.set(path);
+                            }
+                        }
+                    }),
+                );
+            }
+        }
     }
 
     fn start_drag(&self, path: PathBuf) {
@@ -211,15 +219,16 @@ impl PlatformCommon for Platform {
                     item
                 };
 
-                let mtm = MainThreadMarker::new().expect("must be on the main thread");
-                let current_event = NSApplication::sharedApplication(mtm).currentEvent().unwrap();
-
-                let array: Retained<NSArray<NSDraggingItem>> = NSArray::arrayWithObject(&dragging_item);
-                self.ns_view.beginDraggingSessionWithItems_event_source(
-                    &array,
-                    &current_event,
-                    std::mem::transmute(&*self.ns_view),
-                );
+                if let Some(mtm) = MainThreadMarker::new()
+                    && let Some(current_event) = NSApplication::sharedApplication(mtm).currentEvent()
+                {
+                    let array: Retained<NSArray<NSDraggingItem>> = NSArray::arrayWithObject(&dragging_item);
+                    self.ns_view.beginDraggingSessionWithItems_event_source(
+                        &array,
+                        &current_event,
+                        std::mem::transmute(&*self.ns_view),
+                    );
+                }
             }
         }
     }
@@ -244,7 +253,7 @@ impl PlatformCommon for Platform {
     }
 
     fn open_path_in_file_explorer(&self, path: PathBuf) {
-        std::process::Command::new("open").arg("-R").arg(path.into_os_string()).spawn().unwrap();
+        let _ = std::process::Command::new("open").arg("-R").arg(path.into_os_string()).spawn();
     }
 
     fn open_prompt(&self, _: String, _: String, _: String, _: InputType, _: &Later<String>) {}
@@ -286,11 +295,11 @@ impl PlatformCommon for Platform {
         self.direct_context.flush_and_submit();
 
         drop(frame.surface);
-        let command_buffer = self.command_queue.commandBuffer().unwrap();
-
-        command_buffer.presentDrawable(&ProtocolObject::<dyn MTLDrawable>::from_retained(frame.drawable));
-        command_buffer.commit();
-        self.metal_layer.setNeedsDisplay();
+        if let Some(command_buffer) = self.command_queue.commandBuffer() {
+            command_buffer.presentDrawable(&ProtocolObject::<dyn MTLDrawable>::from_retained(frame.drawable));
+            command_buffer.commit();
+            self.metal_layer.setNeedsDisplay();
+        }
 
         unsafe {
             ffi::objc_autoreleasePoolPop(frame.autoreleasepool);
@@ -302,7 +311,7 @@ impl PlatformCommon for Platform {
 impl Platform {
     pub fn new_from_window_handle(handle: *mut c_void) -> Self {
         let view: Retained<NSView> = Retained::from(unsafe { &*(handle as *mut NSView) });
-        let device = MTLCreateSystemDefaultDevice().unwrap();
+        let device = MTLCreateSystemDefaultDevice().expect("Unsable to create system Metal device.");
 
         let metal_layer = {
             let layer = CAMetalLayer::new();
@@ -321,7 +330,7 @@ impl Platform {
             layer
         };
 
-        let command_queue = device.newCommandQueue().unwrap();
+        let command_queue = device.newCommandQueue().expect("Unable to create Metal command queue.");
 
         let backend = unsafe {
             mtl::BackendContext::new(
@@ -331,7 +340,8 @@ impl Platform {
         };
         Self {
             metal_layer,
-            direct_context: direct_contexts::make_metal(&backend, None).unwrap(),
+            direct_context: direct_contexts::make_metal(&backend, None)
+                .expect("Unable to create Metal direct context."),
             command_queue,
             ns_view: view,
             clipboard: MacOsClipboard,

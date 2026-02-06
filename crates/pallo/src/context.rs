@@ -3,12 +3,11 @@ use std::{cell::RefCell, collections::VecDeque, ops::Deref, rc::Rc};
 use web_time::Instant;
 
 use crate::{
-    Animations, AnyEvent, App, CanvasType, Component, Event, IntPoint, Modifiers, Overlay, Point,
-    PointerId, PointerState, Property, PropertyId, RasterSurfaceType, Rect, Signal, SignalCx,
-    Surface,
+    Animations, AnyEvent, App, Component, Event, IntPoint, Modifiers, Overlay, Point, PointerId, PointerState,
+    Property, PropertyId, Rect, Signal, SignalCx,
     component::{ComponentId, ComponentState, WeakComponentId},
     platform::Platform,
-    renderers::{self, RendererType, renderer::Renderer},
+    renderers::{RendererType, renderer::Renderer},
     tree::{NodeId, Tree},
 };
 
@@ -166,9 +165,7 @@ impl<A: App> Cx<A> {
     }
 
     pub fn get_hovered_id(&self, pointer_id: PointerId) -> Option<WeakComponentId> {
-        self.pointer_state
-            .get(&pointer_id)
-            .and_then(|p| p.hovered_component.map(WeakComponentId))
+        self.pointer_state.get(&pointer_id).and_then(|p| p.hovered_component.map(WeakComponentId))
     }
 
     pub fn get_focused_id(&self) -> Option<WeakComponentId> {
@@ -177,11 +174,7 @@ impl<A: App> Cx<A> {
 
     pub(crate) fn is_hovered_any(&self, id: impl Into<NodeId>) -> bool {
         let id: NodeId = id.into();
-        if let Some(p) = self
-            .pointer_state
-            .values()
-            .find(|p| p.hovered_component == Some(id))
-        {
+        if let Some(p) = self.pointer_state.values().find(|p| p.hovered_component == Some(id)) {
             if p.pressed_component.is_some() {
                 return p.pressed_component == Some(id);
             }
@@ -192,16 +185,12 @@ impl<A: App> Cx<A> {
 
     pub(crate) fn is_hovered_ignoring_pressed_any(&self, id: impl Into<NodeId>) -> bool {
         let id: NodeId = id.into();
-        self.pointer_state
-            .values()
-            .any(|p| p.hovered_component == Some(id))
+        self.pointer_state.values().any(|p| p.hovered_component == Some(id))
     }
 
     pub(crate) fn is_pressed_any(&self, id: impl Into<NodeId>) -> bool {
         let id: NodeId = id.into();
-        self.pointer_state
-            .values()
-            .any(|p| p.pressed_component == Some(id))
+        self.pointer_state.values().any(|p| p.pressed_component == Some(id))
     }
 
     pub fn get_bounds(&self, id: impl Into<NodeId>) -> Rect {
@@ -246,22 +235,18 @@ impl<A: App> Cx<A> {
         &mut self.tree.get_mut(id.into()).app_state
     }
 
-    pub fn find_component_id(
-        &mut self,
-        predicate: impl Fn(&A::ComponentState) -> bool,
-    ) -> Option<WeakComponentId> {
+    pub fn find_component_id(&mut self, predicate: impl Fn(&A::ComponentState) -> bool) -> Option<WeakComponentId> {
         let mut out = None;
-        self.tree
-            .traverse_depth(self.tree.get_root_id(), |id, state| {
-                if out.is_some() {
-                    false
-                } else if (predicate)(&state.app_state) {
-                    out = Some(WeakComponentId(id));
-                    false
-                } else {
-                    true
-                }
-            });
+        self.tree.traverse_depth(self.tree.get_root_id(), |id, state| {
+            if out.is_some() {
+                false
+            } else if (predicate)(&state.app_state) {
+                out = Some(WeakComponentId(id));
+                false
+            } else {
+                true
+            }
+        });
         out
     }
 
@@ -271,30 +256,22 @@ impl<A: App> Cx<A> {
         } else {
             self.focused_component = None;
         }
-        self.input.push_back(Event::FocusChanged(
-            self.focused_component.map(WeakComponentId),
-        ));
+        self.input.push_back(Event::FocusChanged(self.focused_component.map(WeakComponentId)));
     }
 
     pub fn focus_next(&mut self) {
         let mut next = false;
         let mut node = None;
-        self.tree
-            .traverse_depth(self.tree.get_root_id(), |id, state| {
-                if next
-                    && self.is_visible(id)
-                    && !state.disabled
-                    && state.focusable
-                    && node.is_none()
-                {
-                    node = Some(id);
-                } else if let Some(focused_id) = self.focused_component
-                    && focused_id == id
-                {
-                    next = true;
-                }
-                true
-            });
+        self.tree.traverse_depth(self.tree.get_root_id(), |id, state| {
+            if next && self.is_visible(id) && !state.disabled && state.focusable && node.is_none() {
+                node = Some(id);
+            } else if let Some(focused_id) = self.focused_component
+                && focused_id == id
+            {
+                next = true;
+            }
+            true
+        });
         if let Some(node) = node {
             self.set_focus(Some(node));
         }
@@ -332,13 +309,7 @@ impl<A: App> Cx<A> {
         self.pointer_state
             .get(&PointerId::Mouse)
             .cloned()
-            .unwrap_or_else(|| {
-                self.pointer_state
-                    .values()
-                    .next()
-                    .cloned()
-                    .unwrap_or(PointerState::default())
-            })
+            .unwrap_or_else(|| self.pointer_state.values().next().cloned().unwrap_or(PointerState::default()))
     }
 
     pub fn get_pointer(&self, id: PointerId) -> Option<&PointerState<A>> {
@@ -381,11 +352,7 @@ impl<A: App> Cx<A> {
         });
     }
 
-    pub fn get_changed_property(
-        &mut self,
-        node_id: impl Into<NodeId>,
-        id: PropertyId,
-    ) -> Option<Property> {
+    pub fn get_changed_property(&mut self, node_id: impl Into<NodeId>, id: PropertyId) -> Option<Property> {
         let node_id = node_id.into();
         if self.tree.get(node_id).properties.is_dirty(id) {
             self.tree.get_mut(node_id).properties.set_dirty(id, false);
