@@ -3,8 +3,8 @@ use std::{ffi::c_void, path::PathBuf, sync::Arc};
 use block2::RcBlock;
 use objc2::{AllocAnyThread, MainThreadMarker, Message, ffi, rc::Retained, runtime::ProtocolObject};
 use objc2_app_kit::{
-    NSApplication, NSDraggingItem, NSModalResponseOK, NSOpenPanel, NSPasteboard, NSPasteboardWriting, NSSavePanel,
-    NSView, NSWorkspace,
+    NSAlert, NSApplication, NSDraggingItem, NSModalResponse, NSModalResponseCancel, NSModalResponseContinue,
+    NSModalResponseOK, NSOpenPanel, NSPasteboard, NSPasteboardWriting, NSSavePanel, NSTextField, NSView, NSWorkspace,
 };
 use objc2_core_foundation::{CGPoint, CGRect, CGSize};
 use objc2_foundation::{NSArray, NSData, NSFileManager, NSPoint, NSRect, NSSearchPathDirectory, NSString, NSURL};
@@ -256,7 +256,39 @@ impl PlatformCommon for Platform {
         let _ = std::process::Command::new("open").arg("-R").arg(path.into_os_string()).spawn();
     }
 
-    fn open_prompt(&self, _: String, _: String, _: String, _: InputType, _: &Later<String>) {}
+    fn open_prompt(&self, title: String, enter_text: String, value: String, _: InputType, result: &Later<String>) {
+        let mtm = MainThreadMarker::new().expect("Not on main thread.");
+
+        let alert = NSAlert::new(mtm);
+        alert.setMessageText(&NSString::from_str(&title));
+        alert.addButtonWithTitle(&NSString::from_str(&enter_text));
+        alert.addButtonWithTitle(&NSString::from_str("Cancel"));
+
+        let text_field = NSTextField::new(mtm);
+        text_field.setFrame(NSRect::new(CGPoint::new(0.0, 0.0), CGSize::new(200.0, 22.0)));
+        text_field.setStringValue(&NSString::from_str(&value));
+
+        alert.setAccessoryView(Some(&text_field));
+
+        let text_field_closure = text_field.clone();
+        let result = result.clone();
+
+        if let Some(window) = self.ns_view.window() {
+            alert.beginSheetModalForWindow_completionHandler(
+                &window,
+                Some(&RcBlock::new(move |response| {
+                    #[allow(non_upper_case_globals)]
+                    const AlertFirstButtonReturn: isize = 1000;
+                    if response == AlertFirstButtonReturn {
+                        result.set(text_field_closure.stringValue().to_string());
+                    }
+                })),
+            );
+
+            window.makeFirstResponder(Some(&text_field));
+            unsafe { text_field.selectText(None) };
+        }
+    }
 
     fn new_frame(&mut self) -> Option<Frame> {
         let autoreleasepool = unsafe { ffi::objc_autoreleasePoolPush() };
