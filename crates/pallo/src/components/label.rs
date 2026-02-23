@@ -435,7 +435,7 @@ impl TextInput {
         );
     }
 
-    fn start_edit<A: App>(&mut self, #[allow(unused)] cx: &mut Cx<A>) {
+    pub fn start_edit<A: App>(&mut self, #[allow(unused)] cx: &mut Cx<A>) {
         if self.is_editable {
             self.start_edit_time = Instant::now();
             self.is_editing.set(true);
