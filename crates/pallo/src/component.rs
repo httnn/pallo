@@ -30,8 +30,28 @@ impl<A: App> Default for ComponentState<A> {
     }
 }
 
+#[macro_export]
+macro_rules! children {
+    ( $app:ty; $( $field:ident ),+ $(,)? ) => {
+        fn for_each_child(&self, f: &mut dyn FnMut(&dyn Component<$app>)) {
+            $( f(&self.$field); )+
+        }
+        fn for_each_child_mut(&mut self, f: &mut dyn FnMut(&mut dyn Component<$app>)) {
+            $( f(&mut self.$field); )+
+        }
+    };
+}
+
 pub trait Component<A: App> {
-    fn draw(&self, cx: &mut Cx<A>, canvas: &mut Canvas);
+    fn for_each_child(&self, _f: &mut dyn FnMut(&dyn Component<A>)) {}
+    fn for_each_child_mut(&mut self, _f: &mut dyn FnMut(&mut dyn Component<A>)) {}
+
+    fn draw_children(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {
+        self.for_each_child(&mut |child| child.draw(cx, canvas));
+    }
+    fn draw(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {
+        self.draw_children(cx, canvas);
+    }
     fn layout(&mut self, cx: &mut Cx<A>, bounds: Rect);
     fn id(&self) -> &ComponentId;
 
@@ -50,8 +70,14 @@ pub trait Component<A: App> {
         }
     }
 
+    fn event_children(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {
+        self.for_each_child_mut(&mut |child| child.event(cx, event));
+    }
+
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {}
+    fn event(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {
+        self.event_children(cx, event);
+    }
 
     #[allow(unused_variables)]
     fn get_preferred_size(&mut self, cx: &mut Cx<A>, parent_bounds: Rect) -> (Option<f32>, Option<f32>) {
