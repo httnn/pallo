@@ -1,9 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{
-    App, Canvas, Cx, Event, Grid, PointerState, Property, PropertyId, PropertyStore, Rect,
-    tree::NodeId,
-};
+use crate::{App, Canvas, Cx, Event, Grid, PointerState, Property, PropertyId, PropertyStore, Rect, tree::NodeId};
 
 pub struct ComponentState<A: App> {
     pub(crate) visible: bool,
@@ -33,24 +30,6 @@ impl<A: App> Default for ComponentState<A> {
     }
 }
 
-#[macro_export]
-macro_rules! event_list {
-  ($cx:expr, $event:expr, $($var:expr),+) => {
-      $(
-          $var.event($cx, $event);
-      )+
-  };
-}
-
-#[macro_export]
-macro_rules! draw_list {
-  ($cx:expr, $canvas:expr, $($var:expr),+) => {
-      $(
-          $var.draw($cx, $canvas);
-      )+
-  };
-}
-
 pub trait Component<A: App> {
     fn draw(&self, cx: &mut Cx<A>, canvas: &mut Canvas);
     fn layout(&mut self, cx: &mut Cx<A>, bounds: Rect);
@@ -75,11 +54,7 @@ pub trait Component<A: App> {
     fn event(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {}
 
     #[allow(unused_variables)]
-    fn get_preferred_size(
-        &mut self,
-        cx: &mut Cx<A>,
-        parent_bounds: Rect,
-    ) -> (Option<f32>, Option<f32>) {
+    fn get_preferred_size(&mut self, cx: &mut Cx<A>, parent_bounds: Rect) -> (Option<f32>, Option<f32>) {
         (None, None)
     }
     fn set_bounds(&self, cx: &mut Cx<A>, bounds: Rect) {
@@ -224,11 +199,7 @@ pub trait NodeIdLike<A: App> {
     fn set_clips_children(&self, cx: &mut Cx<A>, value: bool) {
         cx.set_clips_children(self.node_id(), value);
     }
-    fn add_child<T>(
-        &self,
-        cx: &mut Cx<A>,
-        add_child: impl FnOnce(&mut Cx<A>, ComponentId) -> T,
-    ) -> T {
+    fn add_child<T>(&self, cx: &mut Cx<A>, add_child: impl FnOnce(&mut Cx<A>, ComponentId) -> T) -> T {
         cx.add_child(self.node_id(), add_child)
     }
     fn state_mut<'a>(&self, cx: &'a mut Cx<A>) -> &'a mut A::ComponentState {
