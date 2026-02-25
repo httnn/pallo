@@ -33,22 +33,22 @@ impl<A: App> Default for ComponentState<A> {
 #[macro_export]
 macro_rules! children {
     ( $app:ty; $( $field:ident ),+ $(,)? ) => {
-        fn for_each_child(&self, f: &mut dyn FnMut(&dyn Component<$app>)) {
-            $( f(&self.$field); )+
+        #[inline]
+        fn draw_children(&self, cx: &mut Cx<$app>, canvas: &mut Canvas) {
+            $( self.$field.draw(cx, canvas); )+
         }
-        fn for_each_child_mut(&mut self, f: &mut dyn FnMut(&mut dyn Component<$app>)) {
-            $( f(&mut self.$field); )+
+
+        #[inline]
+        fn event_children(&mut self, cx: &mut Cx<$app>, event: &mut Event<$app>) {
+            $( self.$field.event(cx, event); )+
         }
     };
 }
 
 pub trait Component<A: App> {
-    fn for_each_child(&self, _f: &mut dyn FnMut(&dyn Component<A>)) {}
-    fn for_each_child_mut(&mut self, _f: &mut dyn FnMut(&mut dyn Component<A>)) {}
+    #[allow(unused_variables)]
+    fn draw_children(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {}
 
-    fn draw_children(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {
-        self.for_each_child(&mut |child| child.draw(cx, canvas));
-    }
     fn draw(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {
         self.draw_children(cx, canvas);
     }
@@ -70,9 +70,8 @@ pub trait Component<A: App> {
         }
     }
 
-    fn event_children(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {
-        self.for_each_child_mut(&mut |child| child.event(cx, event));
-    }
+    #[allow(unused_variables)]
+    fn event_children(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {}
 
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {
