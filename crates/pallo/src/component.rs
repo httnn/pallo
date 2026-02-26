@@ -31,16 +31,40 @@ impl<A: App> Default for ComponentState<A> {
 }
 
 #[macro_export]
+macro_rules! __child_draw {
+    ($self:ident, $cx:ident, $canvas:ident, $field:ident) => {
+        $self.$field.draw($cx, $canvas);
+    };
+    ($self:ident, $cx:ident, $canvas:ident, ?$field:ident) => {
+        if let Some(child) = &$self.$field {
+            child.draw($cx, $canvas);
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! __child_event {
+    ($self:ident, $cx:ident, $event:ident, $field:ident) => {
+        $self.$field.event($cx, $event);
+    };
+    ($self:ident, $cx:ident, $event:ident, ?$field:ident) => {
+        if let Some(child) = &mut $self.$field {
+            child.event($cx, $event);
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! children {
-    ( $app:ty; $( $field:ident ),+ $(,)? ) => {
+    ( $app:ty; $( $field:tt ),+ $(,)? ) => {
         #[inline]
         fn draw_children(&self, cx: &mut Cx<$app>, canvas: &mut Canvas) {
-            $( self.$field.draw(cx, canvas); )+
+            $( $crate::__child_draw!(self, cx, canvas, $field); )+
         }
 
         #[inline]
         fn event_children(&mut self, cx: &mut Cx<$app>, event: &mut Event<$app>) {
-            $( self.$field.event(cx, event); )+
+            $( $crate::__child_event!(self, cx, event, $field); )+
         }
     };
 }
