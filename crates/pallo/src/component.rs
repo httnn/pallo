@@ -30,68 +30,160 @@ impl<A: App> Default for ComponentState<A> {
     }
 }
 
-#[macro_export]
-macro_rules! __child_draw {
-    ($self:ident, $cx:ident, $canvas:ident, $field:ident) => {
-        $self.$field.draw($cx, $canvas);
-    };
-    ($self:ident, $cx:ident, $canvas:ident, ?$field:ident) => {
-        if let Some(child) = &$self.$field {
-            child.draw($cx, $canvas);
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! __child_event {
-    ($self:ident, $cx:ident, $event:ident, $field:ident) => {
-        $self.$field.event($cx, $event);
-    };
-    ($self:ident, $cx:ident, $event:ident, ?$field:ident) => {
-        if let Some(child) = &mut $self.$field {
-            child.event($cx, $event);
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! children {
-    ( $app:ty; $( $field:tt ),+ $(,)? ) => {
+macro_rules! component_methods {
+    ($get_id:ident) => {
         #[inline]
-        fn draw_children(&self, cx: &mut Cx<$app>, canvas: &mut Canvas) {
-            $( $crate::__child_draw!(self, cx, canvas, $field); )+
+        fn set_bounds(&self, cx: &mut Cx<A>, bounds: Rect) {
+            cx.set_bounds(self.$get_id(), bounds);
         }
 
         #[inline]
-        fn event_children(&mut self, cx: &mut Cx<$app>, event: &mut Event<$app>) {
-            $( $crate::__child_event!(self, cx, event, $field); )+
+        fn get_bounds(&self, cx: &Cx<A>) -> Rect {
+            cx.get_bounds(self.$get_id())
+        }
+
+        #[inline]
+        fn notify_size_changed(&self, cx: &mut Cx<A>) {
+            cx.notify_size_changed(self.$get_id());
+        }
+
+        #[inline]
+        fn set_disabled(&self, cx: &mut Cx<A>, disabled: bool) {
+            cx.set_disabled(self.$get_id(), disabled);
+        }
+
+        #[inline]
+        fn set_visible(&self, cx: &mut Cx<A>, visible: bool) {
+            cx.set_visible(self.$get_id(), visible);
+        }
+
+        #[inline]
+        fn focus(&self, cx: &mut Cx<A>) {
+            cx.set_focus(Some(self.$get_id()));
+        }
+
+        #[inline]
+        fn is_hovered(&self, pointer: &PointerState<A>) -> bool {
+            pointer.is_hovered(self.$get_id())
+        }
+
+        #[inline]
+        fn is_hovered_any(&self, cx: &Cx<A>) -> bool {
+            cx.is_hovered_any(self.$get_id())
+        }
+
+        #[inline]
+        fn is_pressed_any(&self, cx: &Cx<A>) -> bool {
+            cx.is_pressed_any(self.$get_id())
+        }
+
+        #[inline]
+        fn is_hovered_ignoring_pressed(&self, pointer: &PointerState<A>) -> bool {
+            pointer.is_hovered_ignoring_pressed(self.$get_id())
+        }
+
+        #[inline]
+        fn is_hovered_ignoring_pressed_any(&self, cx: &Cx<A>) -> bool {
+            cx.is_hovered_ignoring_pressed_any(self.$get_id())
+        }
+
+        #[inline]
+        fn is_visible(&self, cx: &Cx<A>) -> bool {
+            cx.is_visible(self.$get_id())
+        }
+
+        #[inline]
+        fn is_pressed(&self, pointer: &PointerState<A>) -> bool {
+            pointer.is_pressed(self.$get_id())
+        }
+
+        #[inline]
+        fn is_disabled(&self, cx: &Cx<A>) -> bool {
+            Cx::is_disabled(&cx.tree, self.$get_id())
+        }
+
+        #[inline]
+        fn is_focused(&self, cx: &Cx<A>) -> bool {
+            cx.is_focused(self.$get_id())
+        }
+
+        #[inline]
+        fn set_interactive(&self, cx: &mut Cx<A>, interactive: bool) {
+            cx.set_interactive(self.$get_id(), interactive)
+        }
+
+        #[inline]
+        fn set_hoverable(&self, cx: &mut Cx<A>, hoverable: bool) {
+            cx.set_hoverable(self.$get_id(), hoverable);
+        }
+
+        #[inline]
+        fn set_clips_children(&self, cx: &mut Cx<A>, value: bool) {
+            cx.set_clips_children(self.$get_id(), value);
+        }
+
+        #[inline]
+        fn state_mut<'a>(&'a self, cx: &'a mut Cx<A>) -> &'a mut A::ComponentState {
+            cx.get_component_state_mut(self.$get_id())
+        }
+
+        #[inline]
+        fn set_property(&self, cx: &mut Cx<A>, id: PropertyId, value: Property) {
+            cx.set_property(self.$get_id(), id, value);
+        }
+
+        #[inline]
+        fn get_changed_property(&self, cx: &mut Cx<A>, id: PropertyId) -> Option<Property> {
+            cx.get_changed_property(self.$get_id(), id)
+        }
+
+        #[inline]
+        fn move_to_front(&self, cx: &mut Cx<A>) {
+            cx.move_to_front(self.$get_id());
+        }
+
+        #[inline]
+        fn interactive(self, cx: &mut Cx<A>) -> Self
+        where
+            Self: Sized,
+        {
+            self.set_interactive(cx, true);
+            self
+        }
+
+        #[inline]
+        fn hoverable(self, cx: &mut Cx<A>) -> Self
+        where
+            Self: Sized,
+        {
+            self.set_hoverable(cx, true);
+            self
+        }
+
+        #[inline]
+        fn hidden(self, cx: &mut Cx<A>) -> Self
+        where
+            Self: Sized,
+        {
+            self.set_visible(cx, false);
+            self
         }
     };
 }
 
 pub trait Component<A: App> {
+    fn layout(&mut self, cx: &mut Cx<A>, bounds: Rect);
+    fn id(&self) -> &ComponentId;
+
     #[allow(unused_variables)]
     fn draw_children(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {}
 
     fn draw(&self, cx: &mut Cx<A>, canvas: &mut Canvas) {
         self.draw_children(cx, canvas);
     }
-    fn layout(&mut self, cx: &mut Cx<A>, bounds: Rect);
-    fn id(&self) -> &ComponentId;
 
     fn relayout(&mut self, cx: &mut Cx<A>) {
         self.layout(cx, self.get_bounds(cx));
-    }
-
-    fn relayout_if_necessary(&mut self, cx: &mut Cx<A>) {
-        self.relayout_if_necessary_with_parent(cx, self.id().weak());
-    }
-
-    fn relayout_if_necessary_with_parent(&mut self, cx: &mut Cx<A>, id: WeakComponentId) {
-        if cx.needs_relayout(id) {
-            self.relayout(cx);
-            cx.set_needs_relayout(id, false);
-        }
     }
 
     #[allow(unused_variables)]
@@ -106,93 +198,19 @@ pub trait Component<A: App> {
     fn get_preferred_size(&mut self, cx: &mut Cx<A>, parent_bounds: Rect) -> (Option<f32>, Option<f32>) {
         (None, None)
     }
-    fn set_bounds(&self, cx: &mut Cx<A>, bounds: Rect) {
-        cx.set_bounds(self.id(), bounds);
+
+    fn relayout_if_necessary(&mut self, cx: &mut Cx<A>) {
+        self.relayout_if_necessary_with_parent(cx, self.id().weak());
     }
-    fn get_bounds(&self, cx: &Cx<A>) -> Rect {
-        cx.get_bounds(self.id())
+
+    fn relayout_if_necessary_with_parent(&mut self, cx: &mut Cx<A>, id: WeakComponentId) {
+        if cx.needs_relayout(id) {
+            self.relayout(cx);
+            cx.set_needs_relayout(id, false);
+        }
     }
-    fn set_disabled(&self, cx: &mut Cx<A>, disabled: bool) {
-        cx.set_disabled(self.id(), disabled);
-    }
-    fn set_visible(&self, cx: &mut Cx<A>, visible: bool) {
-        cx.set_visible(self.id(), visible);
-    }
-    fn focus(&self, cx: &mut Cx<A>) {
-        cx.set_focus(Some(self.id()));
-    }
-    fn is_hovered(&self, pointer: &PointerState<A>) -> bool {
-        pointer.is_hovered(self.id())
-    }
-    fn is_hovered_any(&self, cx: &Cx<A>) -> bool {
-        cx.is_hovered_any(self.id())
-    }
-    fn is_pressed_any(&self, cx: &Cx<A>) -> bool {
-        cx.is_pressed_any(self.id())
-    }
-    fn is_hovered_ignoring_pressed(&self, pointer: &PointerState<A>) -> bool {
-        pointer.is_hovered_ignoring_pressed(self.id())
-    }
-    fn is_hovered_ignoring_pressed_any(&self, cx: &Cx<A>) -> bool {
-        cx.is_hovered_ignoring_pressed_any(self.id())
-    }
-    fn is_visible(&self, cx: &Cx<A>) -> bool {
-        cx.is_visible(self.id())
-    }
-    fn is_pressed(&self, pointer: &PointerState<A>) -> bool {
-        pointer.is_pressed(self.id())
-    }
-    fn is_disabled(&self, cx: &Cx<A>) -> bool {
-        Cx::is_disabled(&cx.tree, self.id())
-    }
-    fn is_focused(&self, cx: &Cx<A>) -> bool {
-        cx.is_focused(self.id())
-    }
-    fn set_interactive(&self, cx: &mut Cx<A>, interactive: bool) {
-        cx.set_interactive(self.id(), interactive)
-    }
-    fn set_hoverable(&self, cx: &mut Cx<A>, hoverable: bool) {
-        cx.set_hoverable(self.id(), hoverable);
-    }
-    fn set_clips_children(&self, cx: &mut Cx<A>, value: bool) {
-        cx.set_clips_children(self.id(), value);
-    }
-    fn notify_size_changed(&self, cx: &mut Cx<A>) {
-        cx.notify_size_changed(self.id());
-    }
-    fn state_mut<'a>(&'a self, cx: &'a mut Cx<A>) -> &'a mut A::ComponentState {
-        cx.get_component_state_mut(self.id())
-    }
-    fn set_property(&self, cx: &mut Cx<A>, id: PropertyId, value: Property) {
-        cx.set_property(self.id(), id, value);
-    }
-    fn get_changed_property(&self, cx: &mut Cx<A>, id: PropertyId) -> Option<Property> {
-        cx.get_changed_property(self.id(), id)
-    }
-    fn interactive(self, cx: &mut Cx<A>) -> Self
-    where
-        Self: Sized,
-    {
-        self.set_interactive(cx, true);
-        self
-    }
-    fn hoverable(self, cx: &mut Cx<A>) -> Self
-    where
-        Self: Sized,
-    {
-        self.set_hoverable(cx, true);
-        self
-    }
-    fn hidden(self, cx: &mut Cx<A>) -> Self
-    where
-        Self: Sized,
-    {
-        self.set_visible(cx, false);
-        self
-    }
-    fn move_to_front(&self, cx: &mut Cx<A>) {
-        cx.move_to_front(self.id());
-    }
+
+    component_methods!(id);
 }
 
 pub type Overlay<T> = Rc<RefCell<T>>;
@@ -200,87 +218,11 @@ pub type Overlay<T> = Rc<RefCell<T>>;
 pub trait NodeIdLike<A: App> {
     fn node_id(&self) -> NodeId;
 
-    fn set_bounds(&self, cx: &mut Cx<A>, bounds: Rect) {
-        cx.set_bounds(self.node_id(), bounds);
-    }
-    fn get_bounds(&self, cx: &Cx<A>) -> Rect {
-        cx.get_bounds(self.node_id())
-    }
-    fn set_disabled(&self, cx: &mut Cx<A>, disabled: bool) {
-        cx.set_disabled(self.node_id(), disabled);
-    }
-    fn set_visible(&self, cx: &mut Cx<A>, visible: bool) {
-        cx.set_visible(self.node_id(), visible);
-    }
-    fn focus(&self, cx: &mut Cx<A>) {
-        cx.set_focus(Some(self.node_id()));
-    }
-    fn is_hovered(&self, pointer: &PointerState<A>) -> bool {
-        pointer.is_hovered(self.node_id())
-    }
-    fn is_hovered_any(&self, cx: &Cx<A>) -> bool {
-        cx.is_hovered_any(self.node_id())
-    }
-    fn is_pressed_any(&self, cx: &Cx<A>) -> bool {
-        cx.is_pressed_any(self.node_id())
-    }
-    fn is_hovered_ignoring_pressed(&self, pointer: &PointerState<A>) -> bool {
-        pointer.is_hovered_ignoring_pressed(self.node_id())
-    }
-    fn is_visible(&self, cx: &Cx<A>) -> bool {
-        cx.is_visible(self.node_id())
-    }
-    fn is_pressed(&self, pointer: &PointerState<A>) -> bool {
-        pointer.is_pressed(self.node_id())
-    }
-    fn is_disabled(&self, cx: &Cx<A>) -> bool {
-        Cx::is_disabled(&cx.tree, self.node_id())
-    }
-    fn is_focused(&self, cx: &Cx<A>) -> bool {
-        cx.is_focused(self.node_id())
-    }
-    fn set_interactive(&self, cx: &mut Cx<A>, interactive: bool) {
-        cx.set_interactive(self.node_id(), interactive)
-    }
-    fn set_hoverable(&self, cx: &mut Cx<A>, hoverable: bool) {
-        cx.set_hoverable(self.node_id(), hoverable);
-    }
-    fn set_clips_children(&self, cx: &mut Cx<A>, value: bool) {
-        cx.set_clips_children(self.node_id(), value);
-    }
     fn add_child<T>(&self, cx: &mut Cx<A>, add_child: impl FnOnce(&mut Cx<A>, ComponentId) -> T) -> T {
         cx.add_child(self.node_id(), add_child)
     }
-    fn state_mut<'a>(&self, cx: &'a mut Cx<A>) -> &'a mut A::ComponentState {
-        cx.get_component_state_mut(self.node_id())
-    }
-    fn set_property(&self, cx: &mut Cx<A>, id: PropertyId, value: Property) {
-        cx.set_property(self.node_id(), id, value);
-    }
-    fn get_changed_property(&self, cx: &mut Cx<A>, id: PropertyId) -> Option<Property> {
-        cx.get_changed_property(self.node_id(), id)
-    }
-    fn interactive(self, cx: &mut Cx<A>) -> Self
-    where
-        Self: Sized,
-    {
-        self.set_interactive(cx, true);
-        self
-    }
-    fn hoverable(self, cx: &mut Cx<A>) -> Self
-    where
-        Self: Sized,
-    {
-        self.set_hoverable(cx, true);
-        self
-    }
-    fn hidden(self, cx: &mut Cx<A>) -> Self
-    where
-        Self: Sized,
-    {
-        self.set_visible(cx, false);
-        self
-    }
+
+    component_methods!(node_id);
 }
 
 #[derive(Clone, PartialEq)]

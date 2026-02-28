@@ -40,11 +40,9 @@ pub use crate::{
 };
 pub use keyboard_types::Key;
 pub use palette;
-pub use pallo_macro::property_id;
+pub use pallo_macro::*;
 pub use pallo_util::*;
-pub use platform::{
-    Clipboard, FileOpenOptions, FileSaveOptions, InputType, Platform, PlatformCommon,
-};
+pub use platform::{Clipboard, FileOpenOptions, FileSaveOptions, InputType, Platform, PlatformCommon};
 pub use rustc_hash::FxHashMap;
 
 #[cfg(target_family = "wasm")]
