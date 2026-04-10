@@ -9,7 +9,7 @@ use skia_safe::{
     font_arguments::{VariationPosition, variation_position::Coordinate},
     gradient_shader::{GradientShaderColors, linear},
     image_filters::{self, CropRect},
-    path::ArcSize,
+    path_builder::ArcSize,
     surfaces,
 };
 
@@ -59,9 +59,10 @@ impl super::RendererType for Renderer {
     type Font = Font;
     type TextBlob = TextBlob;
     type Image = Image;
-    type Path = Path;
+    type PathBuilder = PathBuilder;
     type Canvas<'a> = Canvas<'a>;
     type Surface = Surface;
+    type Path = Path;
 
     fn add_typeface(&mut self, id: impl Into<usize>, data: &[u8]) {
         let mgr = FontMgr::default();
@@ -141,35 +142,55 @@ pub struct Path {
 
 impl Default for Path {
     fn default() -> Self {
-        let mut path = skia_safe::Path::default();
-        path.set_fill_type(skia_safe::PathFillType::Winding);
-        Self { path }
+        Self { path: Default::default() }
     }
 }
 
 impl super::PathType for Path {
+    fn with_offset(&self, value: Point) -> Self {
+        Path { path: self.path.with_offset(value) }
+    }
+
+    fn with_scale(&mut self, value: Point) -> Self {
+        Path { path: self.path.make_scale((value.x, value.y)) }
+    }
+}
+
+pub struct PathBuilder {
+    builder: skia_safe::PathBuilder,
+}
+
+impl Default for PathBuilder {
+    fn default() -> Self {
+        let mut path = skia_safe::PathBuilder::default();
+        path.set_fill_type(skia_safe::PathFillType::Winding);
+        Self { builder: path }
+    }
+}
+
+impl super::PathBuilderType<Renderer> for PathBuilder {
     fn move_to(&mut self, point: Point) -> &mut Self {
-        self.path.move_to(point);
+        self.builder.move_to(point);
         self
     }
 
     fn line_to(&mut self, point: Point) -> &mut Self {
-        self.path.line_to(point);
+        self.builder.line_to(point);
         self
     }
 
     fn conic_to(&mut self, p1: Point, p2: Point, weight: f32) -> &mut Self {
-        self.path.conic_to(p1, p2, weight);
+        self.builder.conic_to(p1, p2, weight);
         self
     }
 
     fn quad_to(&mut self, p1: Point, p2: Point) -> &mut Self {
-        self.path.quad_to(p1, p2);
+        self.builder.quad_to(p1, p2);
         self
     }
 
     fn arc_to_rotated(&mut self, r: Point, x_axis_rotate: f32, large_arc: bool, sweep: bool, end: Point) -> &mut Self {
-        self.path.arc_to_rotated(
+        self.builder.arc_to_radius(
             r,
             x_axis_rotate,
             if large_arc { ArcSize::Large } else { ArcSize::Small },
@@ -180,38 +201,38 @@ impl super::PathType for Path {
     }
 
     fn add_circle(&mut self, point: Point, radius: f32) -> &mut Self {
-        self.path.add_circle(point, radius, None);
+        self.builder.add_circle(point, radius, None);
         self
     }
 
     fn add_rounded_rectangle(&mut self, rect: Rect, rounding: Point) -> &mut Self {
-        self.path.add_round_rect(rect_to_rect(rect), (rounding.x, rounding.y), None);
+        self.builder.add_rrect(
+            skia_safe::RRect::new_rect_xy(rect_to_rect(rect), rounding.x, rounding.y),
+            PathDirection::CW,
+            None,
+        );
         self
     }
 
     fn close(&mut self) {
-        self.path.close();
+        self.builder.close();
     }
 
     fn cubic_to(&mut self, cp1: Point, cp2: Point, point: Point) -> &mut Self {
-        self.path.cubic_to(cp1, cp2, point);
+        self.builder.cubic_to(cp1, cp2, point);
         self
     }
 
-    fn with_offset(&self, value: Point) -> Self {
-        Path { path: self.path.with_offset(value) }
-    }
-
-    fn with_scale(&mut self, value: Point) -> Self {
-        Path { path: self.path.make_scale((value.x, value.y)) }
-    }
-
     fn reset(&mut self) {
-        self.path.reset();
+        self.builder.reset();
     }
 
     fn fill_type_even_odd(&mut self) {
-        self.path.set_fill_type(skia_safe::PathFillType::EvenOdd);
+        self.builder.set_fill_type(skia_safe::PathFillType::EvenOdd);
+    }
+
+    fn build(&mut self) -> Path {
+        Path { path: self.builder.snapshot() }
     }
 }
 

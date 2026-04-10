@@ -1,8 +1,8 @@
 use std::{rc::Rc, slice::Iter};
 
 use crate::{
-    Align, App, Canvas, Cx, Point, Rect, point,
-    renderers::{CanvasType, PathType, renderer::Path},
+    Align, App, Canvas, Cx, Path, PathBuilderType, Point, Rect, point,
+    renderers::{CanvasType, renderer::PathBuilder},
 };
 
 #[derive(Debug)]
@@ -226,7 +226,7 @@ fn get_shape(svg: &'static str) -> Result<SvgShape, String> {
         let d_end = d_start + svg[d_start..].find('"').ok_or("Invalid path argument.")?;
         let d = svg[d_start..d_end].to_owned();
 
-        let mut path = Path::default();
+        let mut path = PathBuilder::default();
         if even_odd {
             path.fill_type_even_odd();
         }
@@ -249,7 +249,7 @@ fn get_shape(svg: &'static str) -> Result<SvgShape, String> {
                 }
             }
         }
-        paths.push(path);
+        paths.push(path.build());
         position = d_end;
     }
     Ok(SvgShape { viewbox, paths })

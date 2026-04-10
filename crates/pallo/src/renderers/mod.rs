@@ -83,7 +83,7 @@ pub trait ImageType {
     fn get_bounds(&self) -> Rect;
 }
 
-pub trait PathType {
+pub trait PathBuilderType<R: RendererType> {
     fn move_to(&mut self, point: Point) -> &mut Self;
     fn line_to(&mut self, point: Point) -> &mut Self;
     fn conic_to(&mut self, p1: Point, p2: Point, weight: f32) -> &mut Self;
@@ -93,10 +93,14 @@ pub trait PathType {
     fn add_rounded_rectangle(&mut self, rect: Rect, rounding: Point) -> &mut Self;
     fn close(&mut self);
     fn cubic_to(&mut self, cp1: Point, cp2: Point, point: Point) -> &mut Self;
-    fn with_offset(&self, value: Point) -> Self;
-    fn with_scale(&mut self, value: Point) -> Self;
     fn fill_type_even_odd(&mut self);
     fn reset(&mut self);
+    fn build(&mut self) -> R::Path;
+}
+
+pub trait PathType {
+    fn with_offset(&self, value: Point) -> Self;
+    fn with_scale(&mut self, value: Point) -> Self;
 }
 
 pub enum BlendMode {
@@ -177,7 +181,8 @@ pub trait RendererType: Sized {
     type Font: FontType + Clone;
     type TextBlob: TextBlobType<Self>;
     type Image: ImageType;
-    type Path: PathType;
+    type PathBuilder: PathBuilderType<Self>;
+    type Path: PathType + Default;
     type Canvas<'a>: CanvasType<Self>;
     type Surface: RasterSurfaceType<Self>;
     fn add_typeface(&mut self, id: impl Into<usize>, data: &[u8]);
