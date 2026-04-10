@@ -112,33 +112,33 @@ extern "C" {
     #[wasm_bindgen(method, js_class = Image, js_namespace = CanvasKit)]
     fn delete(this: &JsImage);
 
-    #[wasm_bindgen(js_name = Path, js_namespace = CanvasKit)]
-    type JsPath;
+    #[wasm_bindgen(js_name = PathBuilder, js_namespace = CanvasKit)]
+    type JsPathBuilder;
 
-    #[wasm_bindgen(constructor, js_class = Path, js_namespace = CanvasKit)]
-    fn new() -> JsPath;
+    #[wasm_bindgen(constructor, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn new() -> JsPathBuilder;
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn setFillType(this: &JsPath, fill_type: &JsValue) -> JsPath;
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn setFillType(this: &JsPathBuilder, fill_type: &JsValue) -> JsPathBuilder;
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn copy(this: &JsPath) -> JsPath;
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn copy(this: &JsPathBuilder) -> JsPathBuilder;
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn moveTo(this: &JsPath, x: f32, y: f32);
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn moveTo(this: &JsPathBuilder, x: f32, y: f32);
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn lineTo(this: &JsPath, x: f32, y: f32);
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn lineTo(this: &JsPathBuilder, x: f32, y: f32);
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn conicTo(this: &JsPath, x1: f32, y1: f32, x2: f32, y2: f32, weight: f32);
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn conicTo(this: &JsPathBuilder, x1: f32, y1: f32, x2: f32, y2: f32, weight: f32);
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn quadTo(this: &JsPath, x1: f32, y1: f32, x2: f32, y2: f32);
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn quadTo(this: &JsPathBuilder, x1: f32, y1: f32, x2: f32, y2: f32);
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
     fn arcToRotated(
-        this: &JsPath,
+        this: &JsPathBuilder,
         rx: f32,
         ry: f32,
         x_axis_rotate: f32,
@@ -148,26 +148,44 @@ extern "C" {
         endy: f32,
     );
 
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn addCircle(this: &JsPath, rx: f32, ry: f32, radius: f32, is_ccw: bool);
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn addCircle(this: &JsPathBuilder, rx: f32, ry: f32, radius: f32, is_ccw: bool);
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn addRRect(this: &JsPathBuilder, rrect: Vec<f32>);
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn close(this: &JsPathBuilder);
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn cubicTo(this: &JsPathBuilder, x1: f32, y1: f32, x2: f32, y2: f32, pointx: f32, pointy: f32);
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn reset(this: &JsPathBuilder);
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn snapshot(this: &JsPathBuilder) -> JsPath;
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn delete(this: &JsPathBuilder);
+
+    #[wasm_bindgen(method, js_class = PathBuilder, js_namespace = CanvasKit)]
+    fn isDeleted(this: &JsPathBuilder) -> bool;
+
+    #[wasm_bindgen(js_name = Path, js_namespace = CanvasKit)]
+    type JsPath;
+
+    #[wasm_bindgen(constructor, js_class = Path, js_namespace = CanvasKit)]
+    fn new() -> JsPath;
 
     #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn addRRect(this: &JsPath, rrect: Vec<f32>);
-
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn close(this: &JsPath);
-
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn cubicTo(this: &JsPath, x1: f32, y1: f32, x2: f32, y2: f32, pointx: f32, pointy: f32);
+    fn copy(this: &JsPath) -> JsPath;
 
     #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
     fn offset(this: &JsPath, x: f32, y: f32) -> JsPath;
 
     #[wasm_bindgen(method)]
     fn transform(this: &JsPath, matrix: &JsMatrix) -> JsPath;
-
-    #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
-    fn reset(this: &JsPath);
 
     #[wasm_bindgen(method, js_class = Path, js_namespace = CanvasKit)]
     fn delete(this: &JsPath);
@@ -578,6 +596,7 @@ impl super::RendererType for Renderer {
     type TextBlob = TextBlob;
     type Image = Image;
     type Path = Path;
+    type PathBuilder = PathBuilder;
     type Canvas<'a> = Canvas;
     type Surface = Surface;
 
@@ -644,6 +663,82 @@ fn make_rounded_rect(rect: Rect, radius: BorderRadius) -> Vec<f32> {
     ]
 }
 
+pub struct PathBuilder {
+    builder: JsPathBuilder,
+}
+
+impl Default for PathBuilder {
+    fn default() -> Self {
+        Self { builder: JsPathBuilder::new() }
+    }
+}
+
+impl super::PathBuilderType<Renderer> for PathBuilder {
+    fn fill_type_even_odd(&mut self) {
+        self.builder.setFillType(&FILL_TYPE_EVEN_ODD.with(JsValue::clone));
+    }
+
+    fn move_to(&mut self, point: Point) -> &mut Self {
+        self.builder.moveTo(point.x, point.y);
+        self
+    }
+
+    fn line_to(&mut self, point: Point) -> &mut Self {
+        self.builder.lineTo(point.x, point.y);
+        self
+    }
+
+    fn conic_to(&mut self, p1: Point, p2: Point, weight: f32) -> &mut Self {
+        self.builder.conicTo(p1.x, p1.y, p2.x, p2.y, weight);
+        self
+    }
+
+    fn quad_to(&mut self, p1: Point, p2: Point) -> &mut Self {
+        self.builder.quadTo(p1.x, p1.y, p2.x, p2.y);
+        self
+    }
+
+    fn arc_to_rotated(&mut self, r: Point, x_axis_rotate: f32, large_arc: bool, sweep: bool, end: Point) -> &mut Self {
+        self.builder.arcToRotated(r.x, r.y, x_axis_rotate, !large_arc, !sweep, end.x, end.y);
+        self
+    }
+
+    fn add_circle(&mut self, point: Point, radius: f32) -> &mut Self {
+        self.builder.addCircle(point.x, point.y, radius, false);
+        self
+    }
+
+    fn add_rounded_rectangle(&mut self, rect: Rect, rounding: Point) -> &mut Self {
+        self.builder.addRRect(make_rounded_rect(rect, rounding.into()));
+        self
+    }
+
+    fn close(&mut self) {
+        self.builder.close();
+    }
+
+    fn cubic_to(&mut self, cp1: Point, cp2: Point, point: Point) -> &mut Self {
+        self.builder.cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, point.x, point.y);
+        self
+    }
+
+    fn reset(&mut self) {
+        self.builder.reset();
+    }
+
+    fn build(&mut self) -> Path {
+        Path { path: self.builder.snapshot() }
+    }
+}
+
+impl Drop for PathBuilder {
+    fn drop(&mut self) {
+        if !self.builder.isDeleted() {
+            self.builder.delete();
+        }
+    }
+}
+
 pub struct Path {
     path: JsPath,
 }
@@ -663,54 +758,6 @@ impl Default for Path {
 }
 
 impl super::PathType for Path {
-    fn fill_type_even_odd(&mut self) {
-        self.path.setFillType(&FILL_TYPE_EVEN_ODD.with(JsValue::clone));
-    }
-
-    fn move_to(&mut self, point: Point) -> &mut Self {
-        self.path.moveTo(point.x, point.y);
-        self
-    }
-
-    fn line_to(&mut self, point: Point) -> &mut Self {
-        self.path.lineTo(point.x, point.y);
-        self
-    }
-
-    fn conic_to(&mut self, p1: Point, p2: Point, weight: f32) -> &mut Self {
-        self.path.conicTo(p1.x, p1.y, p2.x, p2.y, weight);
-        self
-    }
-
-    fn quad_to(&mut self, p1: Point, p2: Point) -> &mut Self {
-        self.path.quadTo(p1.x, p1.y, p2.x, p2.y);
-        self
-    }
-
-    fn arc_to_rotated(&mut self, r: Point, x_axis_rotate: f32, large_arc: bool, sweep: bool, end: Point) -> &mut Self {
-        self.path.arcToRotated(r.x, r.y, x_axis_rotate, !large_arc, !sweep, end.x, end.y);
-        self
-    }
-
-    fn add_circle(&mut self, point: Point, radius: f32) -> &mut Self {
-        self.path.addCircle(point.x, point.y, radius, false);
-        self
-    }
-
-    fn add_rounded_rectangle(&mut self, rect: Rect, rounding: Point) -> &mut Self {
-        self.path.addRRect(make_rounded_rect(rect, rounding.into()));
-        self
-    }
-
-    fn close(&mut self) {
-        self.path.close();
-    }
-
-    fn cubic_to(&mut self, cp1: Point, cp2: Point, point: Point) -> &mut Self {
-        self.path.cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, point.x, point.y);
-        self
-    }
-
     fn with_offset(&self, value: Point) -> Self {
         Self { path: self.path.copy().offset(value.x, value.y) }
     }
@@ -719,10 +766,6 @@ impl super::PathType for Path {
         let matrix = scaled(value.x, value.y);
         let path = self.path.transform(&matrix);
         Self { path }
-    }
-
-    fn reset(&mut self) {
-        self.path.reset();
     }
 }
 
