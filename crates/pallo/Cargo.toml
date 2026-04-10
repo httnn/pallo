@@ -26,7 +26,7 @@ open = "5.3.0"
 # baseview = { path = "../../../baseview" }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-skia-safe = { version = "0.90.0", features = ["metal"] }
+skia-safe = { version = "0.93.1", features = ["metal"] }
 objc2-metal = "0.3.0"
 objc2-foundation = "0.3.0"
 objc2-metal-kit = "0.3.0"
@@ -45,7 +45,7 @@ objc2-uniform-type-identifiers = { version = "0.3.0" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 arboard = "3.4.0"
-skia-safe = { version = "0.90.0", features = ["d3d"] }
+skia-safe = { version = "0.93.1", features = ["d3d"] }
 rfd = { version = "0.15.1", default-features = false, features = ["xdg-portal"] }
 windows = { version = "0.62.0", features = [
     "Win32",
