@@ -95,6 +95,7 @@ impl<A: App> UI<A> {
 
 pub enum WindowEvent {
     Resized(IntPoint),
+    OutsideResizeEnded,
     PointerMove { position: Point, id: PointerId },
     PointerDown { position: Point, button: MouseButton, id: PointerId },
     PointerUp { id: PointerId },
@@ -389,6 +390,9 @@ impl<A: App> UI<A> {
                     self.ui_context.mods.meta = false;
                     self.ui_context.mods.shift = false;
                 }
+            }
+            WindowEvent::OutsideResizeEnded => {
+                self.broadcast_event(&mut Event::OutsideResizeEnded);
             }
         }
         EventStatus::Ignored

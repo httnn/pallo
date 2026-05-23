@@ -3,15 +3,15 @@ use std::{ffi::c_void, path::PathBuf, sync::Arc};
 use block2::RcBlock;
 use objc2::{AllocAnyThread, MainThreadMarker, Message, ffi, rc::Retained, runtime::ProtocolObject};
 use objc2_app_kit::{
-    NSAlert, NSApplication, NSDraggingItem, NSModalResponse, NSModalResponseCancel, NSModalResponseContinue,
-    NSModalResponseOK, NSOpenPanel, NSPasteboard, NSPasteboardWriting, NSSavePanel, NSTextField, NSView, NSWorkspace,
+    NSAlert, NSApplication, NSDraggingItem, NSModalResponseOK, NSOpenPanel, NSPasteboard, NSPasteboardWriting,
+    NSSavePanel, NSTextField, NSView, NSWorkspace,
 };
 use objc2_core_foundation::{CGPoint, CGRect, CGSize};
 use objc2_foundation::{NSArray, NSData, NSFileManager, NSPoint, NSRect, NSSearchPathDirectory, NSString, NSURL};
 use objc2_metal::{
     MTLCommandBuffer, MTLCommandQueue, MTLCreateSystemDefaultDevice, MTLDevice, MTLDrawable, MTLPixelFormat, MTLTexture,
 };
-use objc2_quartz_core::{CAMetalDrawable, CAMetalLayer};
+use objc2_quartz_core::{CAMetalDrawable, CAMetalLayer, CATransaction};
 use objc2_uniform_type_identifiers::UTType;
 use pallo_util::File;
 use skia_safe::{
@@ -239,9 +239,13 @@ impl PlatformCommon for Platform {
 
     fn set_view_size(&mut self, size: (u32, u32)) {
         let scale_factor = self.get_scale_factor() as f64;
+
+        CATransaction::begin();
+        CATransaction::setDisableActions(true);
         self.metal_layer.setDrawableSize(CGSize::new(scale_factor * size.0 as f64, scale_factor * size.1 as f64));
         self.metal_layer.setBounds(CGRect::new(CGPoint::ZERO, CGSize::new(size.0 as f64, size.1 as f64)));
         self.metal_layer.setPosition(CGPoint::new(size.0 as f64 * 0.5, size.1 as f64 * 0.5));
+        CATransaction::commit();
     }
 
     fn next_window_event(&mut self) -> Option<WindowEvent> {

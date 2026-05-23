@@ -229,7 +229,7 @@ impl<A: App> Component<A> for Label {
     }
 
     fn event(&mut self, cx: &mut Cx<A>, event: &mut Event<A>) {
-        if event.update() {
+        if let Event::Update = event {
             if let Some(color) = self.color.next() {
                 self.text.set_color(color);
             }

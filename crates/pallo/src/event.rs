@@ -134,11 +134,6 @@ pub enum Event<A: App> {
     Keydown { key: Key, captured: bool },
     Keyup(Key),
     WindowFocusChanged(bool),
+    OutsideResizeEnded,
     Any(AnyEvent),
-}
-
-impl<A: App> Event<A> {
-    pub fn update(&self) -> bool {
-        matches!(self, Self::Update)
-    }
 }
