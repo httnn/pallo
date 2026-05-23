@@ -42,6 +42,7 @@ pub enum MouseButton {
 
 pub struct PointerState<A: App> {
     pub position: Point,
+    pub is_pressed: bool,
     pub down_position: Point,
     pub down_time: Option<Instant>,
     pub velocity: Point,
@@ -58,6 +59,7 @@ impl<A: App> Clone for PointerState<A> {
     fn clone(&self) -> Self {
         Self {
             position: self.position,
+            is_pressed: self.is_pressed,
             down_position: self.down_position,
             down_time: self.down_time,
             velocity: self.velocity,
@@ -103,6 +105,7 @@ impl<A: App> PointerState<A> {
 impl<A: App> Default for PointerState<A> {
     fn default() -> Self {
         Self {
+            is_pressed: false,
             position: Default::default(),
             down_position: Default::default(),
             down_time: None,

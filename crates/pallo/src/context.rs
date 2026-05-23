@@ -362,6 +362,10 @@ impl<A: App> Cx<A> {
         }
     }
 
+    pub fn any_pointer_pressed(&mut self) -> bool {
+        self.pointer_state.values().any(|p| p.is_pressed)
+    }
+
     fn get_property(&self, node_id: impl Into<NodeId>, prop_id: PropertyId) -> &Property {
         let mut node_id = Some(node_id.into());
         while let Some(id) = node_id {
