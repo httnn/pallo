@@ -68,10 +68,8 @@ pub struct UI<A: App> {
     last_window_size: IntPoint,
     is_broadcasting: bool,
     overlays: Vec<Overlay<dyn Component<A>>>,
+    in_draw: bool,
 }
-
-unsafe impl<A: App> Send for UI<A> {}
-unsafe impl<A: App> Sync for UI<A> {}
 
 impl<A: App> UI<A> {
     pub fn new<R: Component<A> + 'static>(
@@ -89,6 +87,7 @@ impl<A: App> UI<A> {
             last_window_size: IntPoint::default(),
             is_broadcasting: false,
             overlays: vec![],
+            in_draw: false,
         }
     }
 }
@@ -123,6 +122,10 @@ impl<A: App> UI<A> {
     }
 
     pub fn draw(&mut self) {
+        if self.in_draw || self.is_broadcasting {
+            return;
+        }
+        self.in_draw = true;
         let start = Instant::now();
 
         let scale_factor = self.ui_context.platform.get_scale_factor();
@@ -223,6 +226,8 @@ impl<A: App> UI<A> {
 
         // calculate cpu time
         self.ui_context.frame_time_micros = (Instant::now() - start).as_micros();
+
+        self.in_draw = false;
     }
 
     fn update_hovered_component(tree: &mut Tree<ComponentState<A>>, pointer: &mut PointerState<A>) {
