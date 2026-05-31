@@ -173,10 +173,17 @@ impl PlatformCommon for Platform {
     fn file_save_dialog(&self, opts: FileSaveOptions) {
         if let Some(mtm) = MainThreadMarker::new() {
             let panel = NSSavePanel::new(mtm);
-            panel.setAllowedContentTypes(&NSArray::from_retained_slice(&[UTType::typeWithFilenameExtension(
-                &NSString::from_str(&opts.extension),
-            )
-            .expect("Can't convert extension to UTType.")]));
+            let ext = NSString::from_str(&opts.extension);
+            let content_type = UTType::typeWithFilenameExtension(&ext).or_else(|| {
+                UTType::typeWithFilenameExtension_conformingToType(
+                    &ext,
+                    &UTType::typeWithIdentifier(&NSString::from_str("public.data"))
+                        .expect("Can't construct public.data UTType."),
+                )
+            });
+            if let Some(content_type) = content_type {
+                panel.setAllowedContentTypes(&NSArray::from_retained_slice(&[content_type]));
+            }
             panel.setNameFieldStringValue(&NSString::from_str(&opts.filename));
             let result_panel = panel.clone();
             if let Some(window) = self.ns_view.window() {
