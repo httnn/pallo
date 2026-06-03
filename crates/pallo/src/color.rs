@@ -23,6 +23,10 @@ pub fn hsl(h: f32, s: f32, l: f32) -> Color {
     Color { color: Hsl::new(h * 255.0, s, l).into_color() }
 }
 
+pub fn okhsl(h: f32, s: f32, l: f32) -> Color {
+    Color { color: Okhsla::new(h * 255.0, s, l, 1.0).into_color() }
+}
+
 impl Color {
     #[inline(always)]
     pub fn from_rgb(r: f32, g: f32, b: f32) -> Self {
