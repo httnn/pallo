@@ -292,6 +292,7 @@ pub struct TextInput {
     is_editable: bool,
     readonly: bool,
     input_type: InputType,
+    text: Computed<String>,
 }
 
 impl TextInput {
@@ -317,6 +318,7 @@ impl TextInput {
             is_editable: true,
             readonly: false,
             input_type: InputType::Text,
+            text: String::new().into(),
         }
     }
 
@@ -325,7 +327,8 @@ impl TextInput {
         let edited_text = self.edited_text.clone();
         let text: Computed<String> = text.into();
         self.edited_text.set(text.get());
-        self.label.set_text(editing.cx().computed(move || if editing.get() { edited_text.get() } else { text.get() }));
+        self.text = editing.cx().computed(move || if editing.get() { edited_text.get() } else { text.get() });
+        self.label.set_text(self.text.clone());
         self
     }
 
@@ -519,6 +522,12 @@ impl TextInput {
                 if let Some(val) = self.prompt_value.value() {
                     self.is_editing.set(false);
                     return Some(val.to_string());
+                }
+
+                if let Some(text) = self.text.next() {
+                    self.caret_index = self.caret_index.min(text.len() as i32);
+                    self.anchor_index = self.anchor_index.min(text.len() as i32);
+                    self.update_caret_positions();
                 }
             }
             Event::FocusChanged(_) => {
