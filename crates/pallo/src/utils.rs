@@ -85,7 +85,7 @@ impl CachedCanvas {
             (draw)(cx, &mut canvas);
             self.dirty.store(false, std::sync::atomic::Ordering::Relaxed);
         }
-        canvas.draw_surface(&self.surface, self.bounds.relative_point((0.0, 0.0)));
+        canvas.draw_surface(&self.surface, self.bounds.top_left());
     }
 }
 

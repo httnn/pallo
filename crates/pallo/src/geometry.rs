@@ -384,6 +384,22 @@ impl Rect {
         point((self.a.x + self.b.x) * 0.5, (self.a.y + self.b.y) * 0.5)
     }
 
+    pub fn top_center(&self) -> Point {
+        point(0.5 * (self.a.x + self.b.x), self.a.y)
+    }
+
+    pub fn bottom_center(&self) -> Point {
+        point(0.5 * (self.a.x + self.b.x), self.b.y)
+    }
+
+    pub fn left_center(&self) -> Point {
+        point(self.a.x, 0.5 * (self.a.y + self.b.y))
+    }
+
+    pub fn right_center(&self) -> Point {
+        point(self.b.x, 0.5 * (self.a.y + self.b.y))
+    }
+
     #[inline(always)]
     pub fn x_aligned_within(&self, other: Rect, align: Align) -> Rect {
         let left = match align {
@@ -447,6 +463,22 @@ impl Rect {
 
     pub fn relative_point(&self, point: impl Into<Point>) -> Point {
         self.a.lerp_point(self.b, point)
+    }
+
+    pub fn top_left(&self) -> Point {
+        self.a
+    }
+
+    pub fn top_right(&self) -> Point {
+        point(self.b.x, self.a.y)
+    }
+
+    pub fn bottom_left(&self) -> Point {
+        point(self.a.x, self.b.y)
+    }
+
+    pub fn bottom_right(&self) -> Point {
+        self.b
     }
 
     #[inline(always)]

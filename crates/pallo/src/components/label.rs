@@ -97,7 +97,7 @@ impl Text {
 
     pub fn draw(&self, canvas: &mut Canvas, bounds: Rect) {
         if let Some(blob) = &self.blob {
-            canvas.fill(self.color).draw_text(blob, bounds.relative_point((0.0, 1.0)));
+            canvas.fill(self.color).draw_text(blob, bounds.bottom_left());
         }
     }
 
