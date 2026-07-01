@@ -191,7 +191,8 @@ impl Label {
         self
     }
 
-    pub fn get_text_width(&self) -> f32 {
+    pub fn get_text_width<A: App>(&mut self, cx: &mut Cx<A>) -> f32 {
+        self.update_text(cx);
         self.text.get_width()
     }
 
@@ -388,8 +389,8 @@ impl TextInput {
         min_distance_index as i32
     }
 
-    pub fn get_text_width(&self) -> f32 {
-        self.label.get_text_width()
+    pub fn get_text_width<A: App>(&mut self, cx: &mut Cx<A>) -> f32 {
+        self.label.get_text_width(cx)
     }
 
     pub fn is_empty(&self) -> bool {
