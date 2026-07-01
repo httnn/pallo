@@ -146,7 +146,6 @@ impl<A: App> UI<A> {
         }
 
         // check for long presses
-        #[cfg(target_os = "ios")]
         {
             let mut long_press = None;
             for pointer in self.ui_context.pointer_state.values_mut() {
