@@ -652,14 +652,14 @@ fn make_rounded_rect(rect: Rect, radius: BorderRadius) -> Vec<f32> {
         rect.a.y,
         rect.b.x,
         rect.b.y,
-        radius.left,
-        radius.left,
-        radius.top,
-        radius.top,
-        radius.right,
-        radius.right,
-        radius.bottom,
-        radius.bottom,
+        radius.top_left,
+        radius.top_left,
+        radius.top_right,
+        radius.top_right,
+        radius.bottom_right,
+        radius.bottom_right,
+        radius.bottom_left,
+        radius.bottom_left,
     ]
 }
 

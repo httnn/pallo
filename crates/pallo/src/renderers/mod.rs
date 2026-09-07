@@ -7,21 +7,21 @@ pub mod renderer;
 pub use renderer::*;
 
 pub struct BorderRadius {
-    pub left: f32,
-    pub top: f32,
-    pub right: f32,
-    pub bottom: f32,
+    pub top_left: f32,
+    pub top_right: f32,
+    pub bottom_right: f32,
+    pub bottom_left: f32,
 }
 
 impl From<f32> for BorderRadius {
     fn from(val: f32) -> Self {
-        BorderRadius { left: val, top: val, right: val, bottom: val }
+        BorderRadius { top_left: val, top_right: val, bottom_right: val, bottom_left: val }
     }
 }
 
 impl From<Point> for BorderRadius {
     fn from(val: Point) -> Self {
-        BorderRadius { left: val.x, top: val.y, right: val.x, bottom: val.y }
+        BorderRadius { top_left: val.x, top_right: val.y, bottom_right: val.x, bottom_left: val.y }
     }
 }
 

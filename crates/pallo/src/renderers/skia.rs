@@ -3,7 +3,7 @@ use std::cell::UnsafeCell;
 use rustc_hash::FxHashMap;
 use skia_safe::{
     ClipOp, Data, FontArguments, FontMgr, FourByteTag, ISize, ImageInfo, MaskFilter, Paint, PathDirection, RRect,
-    SamplingOptions, Typeface,
+    SamplingOptions, Typeface, Vector,
     canvas::SaveLayerRec,
     color_filters,
     font_arguments::{VariationPosition, variation_position::Coordinate},
@@ -406,7 +406,15 @@ impl super::CanvasType<Renderer> for Canvas<'_> {
     fn draw_round_rect(&mut self, rect: Rect, radius: impl Into<BorderRadius>) -> &mut Self {
         let radius: BorderRadius = radius.into();
         self.canvas.draw_rrect(
-            RRect::new_nine_patch(rect_to_rect(rect), radius.left, radius.top, radius.right, radius.bottom),
+            RRect::new_rect_radii(
+                rect_to_rect(rect),
+                &[
+                    Vector::new(radius.top_left, radius.top_left),
+                    Vector::new(radius.top_right, radius.top_right),
+                    Vector::new(radius.bottom_right, radius.bottom_right),
+                    Vector::new(radius.bottom_left, radius.bottom_left),
+                ],
+            ),
             &self.paint,
         );
         self
