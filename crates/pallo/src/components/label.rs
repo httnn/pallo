@@ -271,7 +271,7 @@ pub const NAME_INPUT_CHAR_MAPPER: CharMapper = |_text, char, _caret| {
     if ch == ',' {
         ch = '.';
     }
-    if ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '.' || ch == '-' || ch == ' ' || ch == '/' {
+    if ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '.' || ch == '-' || ch == ' ' || ch == '/' || ch == '#' {
         return Some(char.clone());
     }
     None
