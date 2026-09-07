@@ -303,6 +303,10 @@ impl Rect {
         Self { a: point(0.0, 0.0), b: point(w, h) }
     }
 
+    pub fn from_center_and_radius(center: Point, radius: f32) -> Self {
+        Self { a: center.with_offset(-radius), b: center.with_offset(radius) }
+    }
+
     pub fn from_xywh(x: f32, y: f32, w: f32, h: f32) -> Self {
         Self { a: point(x, y), b: point(x + w, y + h) }
     }
