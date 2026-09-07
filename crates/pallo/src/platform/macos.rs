@@ -208,34 +208,30 @@ impl PlatformCommon for Platform {
 
     fn start_drag(&self, path: PathBuf) {
         if let Some(path) = path.to_str() {
-            unsafe {
-                let dragging_item = {
-                    let pasteboard_item = NSURL::fileURLWithPath(&NSString::from_str(path));
+            let dragging_item = {
+                let pasteboard_item = NSURL::fileURLWithPath(&NSString::from_str(path));
 
-                    let item = NSDraggingItem::alloc();
-                    let item = NSDraggingItem::initWithPasteboardWriter(
-                        item,
-                        &ProtocolObject::<dyn NSPasteboardWriting>::from_retained(pasteboard_item),
-                    );
+                let item = NSDraggingItem::alloc();
+                let item = NSDraggingItem::initWithPasteboardWriter(
+                    item,
+                    &ProtocolObject::<dyn NSPasteboardWriting>::from_retained(pasteboard_item),
+                );
 
-                    let icon = NSWorkspace::sharedWorkspace().iconForFile(&NSString::from_str(path));
-                    let icon_size = icon.size();
-                    let dragging_frame = NSRect::new(NSPoint::new(0.0, 0.0), icon_size);
+                let icon = NSWorkspace::sharedWorkspace().iconForFile(&NSString::from_str(path));
+                let icon_size = icon.size();
+                let dragging_frame = NSRect::new(NSPoint::new(0.0, 0.0), icon_size);
 
-                    item.setDraggingFrame_contents(dragging_frame, Some(&Retained::from(&*icon)));
-                    item
-                };
+                unsafe { item.setDraggingFrame_contents(dragging_frame, Some(&Retained::from(&*icon))) };
+                item
+            };
 
-                if let Some(mtm) = MainThreadMarker::new()
-                    && let Some(current_event) = NSApplication::sharedApplication(mtm).currentEvent()
-                {
-                    let array: Retained<NSArray<NSDraggingItem>> = NSArray::arrayWithObject(&dragging_item);
-                    self.ns_view.beginDraggingSessionWithItems_event_source(
-                        &array,
-                        &current_event,
-                        std::mem::transmute(&*self.ns_view),
-                    );
-                }
+            if let Some(mtm) = MainThreadMarker::new()
+                && let Some(current_event) = NSApplication::sharedApplication(mtm).currentEvent()
+            {
+                let array: Retained<NSArray<NSDraggingItem>> = NSArray::arrayWithObject(&dragging_item);
+                self.ns_view.beginDraggingSessionWithItems_event_source(&array, &current_event, unsafe {
+                    std::mem::transmute(&*self.ns_view)
+                });
             }
         }
     }
