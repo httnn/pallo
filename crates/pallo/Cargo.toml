@@ -8,6 +8,7 @@ description = "An uncomplicated and flexible UI library."
 
 [dependencies]
 anyhow = "1.0.83"
+itertools = "0.14.0"
 keyboard-types = "0.6.2"
 parking_lot = "0.12"
 rustc-hash = "2.0.0"

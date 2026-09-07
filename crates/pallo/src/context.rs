@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::{cell::RefCell, collections::VecDeque, ops::Deref, rc::Rc};
 use web_time::Instant;
@@ -326,6 +327,10 @@ impl<A: App> Cx<A> {
             }
             false
         })
+    }
+
+    pub fn get_pressed_pointers<const N: usize>(&mut self) -> Option<[&PointerState<A>; N]> {
+        self.pointer_state.values().filter(|s| s.is_pressed).collect_array()
     }
 
     pub fn mock_modifiers(&mut self, mods: Modifiers) {

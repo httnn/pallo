@@ -291,6 +291,7 @@ impl<A: App> UI<A> {
                 state.delta_sum = point(0.0, 0.0);
                 state.button = button;
                 state.position = position;
+                state.is_pressed = true;
                 state.down_position = state.position;
                 state.down_time = Some(Instant::now());
                 Self::update_hovered_component(&mut cx.tree, state);
@@ -342,6 +343,7 @@ impl<A: App> UI<A> {
                 if let Some(state) = cx.pointer_state.get_mut(&id) {
                     state.pressed_component = None;
                     state.is_long_press = false;
+                    state.is_pressed = false;
                     state.down_time = None;
                     Self::update_hovered_component(&mut cx.tree, state);
                 }
