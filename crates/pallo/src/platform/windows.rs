@@ -23,30 +23,26 @@ use windows::{
         Graphics::{
             Direct3D::D3D_FEATURE_LEVEL_11_0,
             Direct3D12::{
-                D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_DESC,
-                D3D12_COMMAND_QUEUE_FLAG_NONE, D3D12_FENCE_FLAG_NONE, D3D12_RESOURCE_STATE_PRESENT,
-                D3D12CreateDevice, ID3D12Device, ID3D12Fence,
+                D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_DESC, D3D12_COMMAND_QUEUE_FLAG_NONE,
+                D3D12_FENCE_FLAG_NONE, D3D12_RESOURCE_STATE_PRESENT, D3D12CreateDevice, ID3D12Device, ID3D12Fence,
             },
             DirectComposition::{
-                DCompositionCreateDevice2, IDCompositionDevice, IDCompositionTarget,
-                IDCompositionVisual,
+                DCompositionCreateDevice2, IDCompositionDevice, IDCompositionTarget, IDCompositionVisual,
             },
             Dxgi::{
                 Common::{
-                    DXGI_ALPHA_MODE_PREMULTIPLIED, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_UNKNOWN,
-                    DXGI_SAMPLE_DESC,
+                    DXGI_ALPHA_MODE_PREMULTIPLIED, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_UNKNOWN, DXGI_SAMPLE_DESC,
                 },
-                CreateDXGIFactory1, DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_PRESENT,
-                DXGI_SCALING_STRETCH, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FLAG,
-                DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT,
-                DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, DXGI_USAGE_RENDER_TARGET_OUTPUT, IDXGIAdapter1,
-                IDXGIFactory2, IDXGISwapChain1, IDXGISwapChain3,
+                CreateDXGIFactory1, DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_SOFTWARE, DXGI_PRESENT, DXGI_SCALING_STRETCH,
+                DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FLAG, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT,
+                DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL, DXGI_USAGE_RENDER_TARGET_OUTPUT, IDXGIAdapter1, IDXGIFactory2,
+                IDXGISwapChain1, IDXGISwapChain3,
             },
         },
         System::{
             DataExchange::{
-                CloseClipboard, EmptyClipboard, GetClipboardData, IsClipboardFormatAvailable,
-                OpenClipboard, RegisterClipboardFormatW, SetClipboardData,
+                CloseClipboard, EmptyClipboard, GetClipboardData, IsClipboardFormatAvailable, OpenClipboard,
+                RegisterClipboardFormatW, SetClipboardData,
             },
             Memory::{GMEM_MOVEABLE, GlobalAlloc, GlobalLock, GlobalSize, GlobalUnlock},
             Ole::{CF_HDROP, CF_WAVE},
@@ -230,13 +226,7 @@ fn get_hardware_adapter(factory: &IDXGIFactory2) -> Result<IDXGIAdapter1> {
         }
 
         unsafe {
-            if D3D12CreateDevice(
-                &adapter,
-                D3D_FEATURE_LEVEL_11_0,
-                &mut Option::<ID3D12Device>::None,
-            )
-            .is_ok()
-            {
+            if D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_0, &mut Option::<ID3D12Device>::None).is_ok() {
                 return Ok(adapter);
             }
         }
@@ -353,10 +343,8 @@ impl PlatformCommon for Platform {
 
     fn file_open_dialog(&self, opts: super::FileOpenOptions) {
         std::thread::spawn(move || {
-            if let Some(path) = rfd::FileDialog::new()
-                .add_filter(opts.filetype_desc, &opts.extensions)
-                .set_directory("~")
-                .pick_file()
+            if let Some(path) =
+                rfd::FileDialog::new().add_filter(opts.filetype_desc, &opts.extensions).set_directory("~").pick_file()
             {
                 opts.result.set(vec![File::Path(path)]);
             }
@@ -395,10 +383,7 @@ impl PlatformCommon for Platform {
         }
         if let Some(mut surface) = self.surfaces[self.frame_index].take() {
             surface.canvas().save();
-            Some(Frame {
-                surface,
-                surface_index: self.frame_index,
-            })
+            Some(Frame { surface, surface_index: self.frame_index })
         } else {
             None
         }
@@ -421,22 +406,17 @@ impl Platform {
         #[cfg(feature = "d3d_debug")]
         let dxgi_factory: IDXGIFactory2 = unsafe {
             let mut debug_controller: Option<ID3D12Debug> = None;
-            D3D12GetDebugInterface(&mut debug_controller)
-                .expect("Failed to create Direct3D debug controller");
+            D3D12GetDebugInterface(&mut debug_controller).expect("Failed to create Direct3D debug controller");
 
-            debug_controller
-                .expect("Failed to enable debug layer")
-                .EnableDebugLayer();
+            debug_controller.expect("Failed to enable debug layer").EnableDebugLayer();
 
             CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG).expect("Failed to create DXGI factory")
         };
 
         #[cfg(not(feature = "d3d_debug"))]
-        let dxgi_factory: IDXGIFactory2 =
-            unsafe { CreateDXGIFactory1().expect("Failed to create DXGI factory") };
+        let dxgi_factory: IDXGIFactory2 = unsafe { CreateDXGIFactory1().expect("Failed to create DXGI factory") };
 
-        let adapter = get_hardware_adapter(&dxgi_factory)
-            .expect("Failed to find any suitable Direct3D 12 adapters");
+        let adapter = get_hardware_adapter(&dxgi_factory).expect("Failed to find any suitable Direct3D 12 adapters");
 
         let mut device: Option<ID3D12Device> = None;
         unsafe {
@@ -451,11 +431,8 @@ impl Platform {
             Type: D3D12_COMMAND_LIST_TYPE_DIRECT,
             ..Default::default()
         };
-        let command_queue: ID3D12CommandQueue = unsafe {
-            device
-                .CreateCommandQueue(&queue_desc)
-                .expect("Failed to create the Direct3D command queue")
-        };
+        let command_queue: ID3D12CommandQueue =
+            unsafe { device.CreateCommandQueue(&queue_desc).expect("Failed to create the Direct3D command queue") };
 
         let size = int_point(1000, 1000);
 
@@ -465,10 +442,7 @@ impl Platform {
             Height: size.y as u32,
             Format: DXGI_FORMAT_R8G8B8A8_UNORM,
             Stereo: false.into(),
-            SampleDesc: DXGI_SAMPLE_DESC {
-                Count: 1,
-                Quality: 0,
-            },
+            SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
             BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
             BufferCount: 2,
             Scaling: DXGI_SCALING_STRETCH,
@@ -483,38 +457,21 @@ impl Platform {
                 .expect("Failed to create the Direct3D swap chain")
         };
 
-        let swap_chain: IDXGISwapChain3 =
-            IDXGISwapChain1::cast(&swap_chain).expect("Failed to cast");
+        let swap_chain: IDXGISwapChain3 = IDXGISwapChain1::cast(&swap_chain).expect("Failed to cast");
 
         unsafe {
-            swap_chain
-                .SetMaximumFrameLatency(1)
-                .expect("Failed to set maximum frame latency");
+            swap_chain.SetMaximumFrameLatency(1).expect("Failed to set maximum frame latency");
         }
-        let composition_device: IDCompositionDevice = unsafe {
-            DCompositionCreateDevice2(None).expect("Could not create composition device")
-        };
-        let target = unsafe {
-            composition_device
-                .CreateTargetForHwnd(hwnd, true)
-                .expect("Could not create composition target")
-        };
-        let visual = unsafe {
-            composition_device
-                .CreateVisual()
-                .expect("Could not create composition visual")
-        };
+        let composition_device: IDCompositionDevice =
+            unsafe { DCompositionCreateDevice2(None).expect("Could not create composition device") };
+        let target =
+            unsafe { composition_device.CreateTargetForHwnd(hwnd, true).expect("Could not create composition target") };
+        let visual = unsafe { composition_device.CreateVisual().expect("Could not create composition visual") };
 
         unsafe {
-            visual
-                .SetContent(&swap_chain)
-                .expect("Failed to set composition content");
-            target
-                .SetRoot(&visual)
-                .expect("Failed to set composition root");
-            composition_device
-                .Commit()
-                .expect("Failed to commit composition");
+            visual.SetContent(&swap_chain).expect("Failed to set composition content");
+            target.SetRoot(&visual).expect("Failed to set composition root");
+            composition_device.Commit().expect("Failed to commit composition");
         }
 
         let swap_chain_waitable = unsafe { swap_chain.GetFrameLatencyWaitableObject() };
@@ -524,15 +481,10 @@ impl Platform {
 
         // use a high value to make it easier to track these in PIX
         let fence_values = vec![10000; swap_chain_desc.BufferCount as usize];
-        let fence: ID3D12Fence = unsafe {
-            device
-                .CreateFence(fence_values[0], D3D12_FENCE_FLAG_NONE)
-                .expect("Failed to create fence")
-        };
+        let fence: ID3D12Fence =
+            unsafe { device.CreateFence(fence_values[0], D3D12_FENCE_FLAG_NONE).expect("Failed to create fence") };
 
-        let fence_event = unsafe {
-            CreateEventW(None, false, false, PCWSTR::null()).expect("Failed to create event")
-        };
+        let fence_event = unsafe { CreateEventW(None, false, false, PCWSTR::null()).expect("Failed to create event") };
         let frame_index = unsafe { swap_chain.GetCurrentBackBufferIndex() as usize };
 
         let backend_context = BackendContext {
@@ -542,9 +494,8 @@ impl Platform {
             memory_allocator: None,
             protected_context: Protected::No,
         };
-        let gr_context = unsafe {
-            DirectContext::new_d3d(&backend_context, None).expect("Failed to create Skia context")
-        };
+        let gr_context =
+            unsafe { DirectContext::new_d3d(&backend_context, None).expect("Failed to create Skia context") };
 
         let mut ret = Self {
             hwnd,
@@ -584,11 +535,8 @@ impl Platform {
         self.buffers.clear();
         self.surfaces.clear();
         for i in 0..self.swap_chain_desc.BufferCount {
-            let buffer: ID3D12Resource = unsafe {
-                self.swap_chain
-                    .GetBuffer(i)
-                    .expect("Could not get swapchain buffer")
-            };
+            let buffer: ID3D12Resource =
+                unsafe { self.swap_chain.GetBuffer(i).expect("Could not get swapchain buffer") };
             self.buffers.push(buffer.clone());
 
             let info = TextureResourceInfo {
@@ -620,14 +568,10 @@ impl Platform {
         unsafe {
             let current_fence_value = *self.fence_values.iter().max().unwrap();
             // Schedule a Signal command in the queue.
-            self.command_queue
-                .Signal(&self.fence, current_fence_value)
-                .unwrap();
+            self.command_queue.Signal(&self.fence, current_fence_value).unwrap();
 
             // Wait until the fence has been processed.
-            self.fence
-                .SetEventOnCompletion(current_fence_value, self.fence_event)
-                .unwrap();
+            self.fence.SetEventOnCompletion(current_fence_value, self.fence_event).unwrap();
             WaitForSingleObjectEx(self.fence_event, INFINITE, false);
 
             // Increment all fence values
@@ -643,9 +587,7 @@ impl Platform {
                 let current_fence_value = self.fence_values[self.frame_index];
 
                 // Schedule a Signal command in the queue.
-                self.command_queue
-                    .Signal(&self.fence, current_fence_value)
-                    .unwrap();
+                self.command_queue.Signal(&self.fence, current_fence_value).unwrap();
 
                 // Update the frame index.
                 self.frame_index = self.swap_chain.GetCurrentBackBufferIndex() as usize;
@@ -653,9 +595,7 @@ impl Platform {
 
                 // If the next frame is not ready to be rendered yet, wait until it is ready.
                 if self.fence.GetCompletedValue() < old_fence_value {
-                    self.fence
-                        .SetEventOnCompletion(old_fence_value, self.fence_event)
-                        .unwrap();
+                    self.fence.SetEventOnCompletion(old_fence_value, self.fence_event).unwrap();
                     WaitForSingleObjectEx(self.fence_event, INFINITE, false);
                 }
 
