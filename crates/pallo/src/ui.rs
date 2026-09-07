@@ -257,6 +257,10 @@ impl<A: App> UI<A> {
                 cx.ui_bounds = bounds.with_scale(1.0 / scale);
                 cx.ui_scale = scale;
 
+                for overlay in &mut self.overlays {
+                    overlay.borrow_mut().layout(cx, cx.ui_bounds);
+                }
+
                 let scale_factor_changed = cx.scale_factor.set_if_changed(cx.platform.get_scale_factor());
                 if scale_factor_changed || self.root.get_bounds(cx) != cx.ui_bounds {
                     self.root.layout(cx, cx.ui_bounds);
