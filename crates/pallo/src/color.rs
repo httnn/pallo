@@ -90,7 +90,7 @@ impl Color {
     #[inline(always)]
     pub fn with_lightness_okhsl(self, lightness: f32) -> Self {
         let mut color = Okhsla::from_color(self.color);
-        color.lightness = lightness;
+        color.lightness = lightness.clamp(0.0, 1.0);
         Color { color: color.into_color() }
     }
 
