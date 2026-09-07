@@ -376,6 +376,11 @@ impl<A: App> Cx<A> {
         }
         panic!()
     }
+
+    pub fn smooth_value(&self, current_value: f32, target_value: f32, smooth_ms: f32) -> f32 {
+        let t = 1.0 - (-self.frame_delta_ms / smooth_ms).exp();
+        current_value + (target_value - current_value) * t
+    }
 }
 
 impl<A: App> Deref for Cx<A> {
