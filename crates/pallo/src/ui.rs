@@ -233,7 +233,7 @@ impl<A: App> UI<A> {
         let mut hovered_component = None;
         tree.traverse_depth(tree.get_root_id(), |id, state| {
             let contains_point = state.bounds.contains(&pointer.position);
-            if state.visible && state.hoverable && !Cx::is_disabled(tree, id) && contains_point {
+            if state.visible && state.hoverable && Cx::is_enabled(tree, id) && contains_point {
                 hovered_component = Some(id);
             }
             state.visible && (!state.clips_children || contains_point)

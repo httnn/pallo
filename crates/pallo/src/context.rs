@@ -105,14 +105,37 @@ impl<A: App> Cx<A> {
     }
 
     pub(crate) fn is_visible(&self, id: impl Into<NodeId>) -> bool {
-        let mut node_id = Some(id.into());
-        while let Some(id) = node_id {
-            if !self.tree.get(id).visible {
-                return false;
-            }
-            node_id = self.tree.get_parent(id);
+        self.tree.get(id.into()).truly_visible
+    }
+
+    pub(crate) fn set_truly_visible(&mut self, id: NodeId, truly_visible: bool) {
+        let truly_visible = self.tree.get(id).visible && truly_visible;
+        self.tree.get_mut(id).truly_visible = truly_visible;
+        for child_id in self.tree.get_children_mut(id).clone() {
+            self.set_truly_visible(child_id, truly_visible);
         }
-        true
+    }
+
+    pub(crate) fn set_visible(&mut self, c: impl Into<NodeId>, visible: bool) {
+        let node_id = c.into();
+        let node = self.tree.get_mut(node_id);
+        if node.visible != visible {
+            node.visible = visible;
+            node.truly_visible = node.visible;
+
+            if node.visible {
+                let mut traversed_node_id = Some(node_id);
+                while let Some(id) = traversed_node_id {
+                    if !self.tree.get(id).visible {
+                        self.tree.get_mut(node_id).truly_visible = false;
+                        break;
+                    }
+                    traversed_node_id = self.tree.get_parent(id);
+                }
+            }
+
+            self.set_truly_visible(node_id, self.tree.get(node_id).truly_visible);
+        }
     }
 
     pub(crate) fn is_focused(&self, id: impl Into<NodeId>) -> bool {
@@ -154,15 +177,38 @@ impl<A: App> Cx<A> {
         false
     }
 
-    pub(crate) fn is_disabled(tree: &Tree<ComponentState<A>>, id: impl Into<NodeId>) -> bool {
-        let mut node_id = Some(id.into());
-        while let Some(id) = node_id {
-            if tree.get(id).disabled {
-                return true;
-            }
-            node_id = tree.get_parent(id);
+    pub(crate) fn set_truly_enabled(&mut self, id: NodeId, truly_enabled: bool) {
+        let truly_enabled = self.tree.get(id).enabled && truly_enabled;
+        self.tree.get_mut(id).truly_enabled = truly_enabled;
+        for child_id in self.tree.get_children_mut(id).clone() {
+            self.set_truly_enabled(child_id, truly_enabled);
         }
-        false
+    }
+
+    pub(crate) fn is_enabled(tree: &Tree<ComponentState<A>>, id: impl Into<NodeId>) -> bool {
+        tree.get(id.into()).truly_enabled
+    }
+
+    pub(crate) fn set_enabled(&mut self, id: impl Into<NodeId>, enabled: bool) {
+        let node_id = id.into();
+        let node = self.tree.get_mut(node_id);
+        if node.enabled != enabled {
+            node.enabled = enabled;
+            node.truly_enabled = node.enabled;
+
+            if node.enabled {
+                let mut traversed_node_id = Some(node_id);
+                while let Some(id) = traversed_node_id {
+                    if !self.tree.get(id).enabled {
+                        self.tree.get_mut(node_id).truly_enabled = false;
+                        break;
+                    }
+                    traversed_node_id = self.tree.get_parent(id);
+                }
+            }
+
+            self.set_truly_enabled(node_id, self.tree.get(node_id).truly_enabled);
+        }
     }
 
     pub fn get_hovered_id(&self, pointer_id: PointerId) -> Option<WeakComponentId> {
@@ -200,14 +246,6 @@ impl<A: App> Cx<A> {
 
     pub(crate) fn set_bounds(&mut self, id: impl Into<NodeId>, bounds: Rect) {
         self.tree.get_mut(id.into()).bounds = bounds;
-    }
-
-    pub(crate) fn set_visible(&mut self, c: impl Into<NodeId>, visible: bool) {
-        self.tree.get_mut(c.into()).visible = visible;
-    }
-
-    pub(crate) fn set_disabled(&mut self, id: impl Into<NodeId>, disabled: bool) {
-        self.tree.get_mut(id.into()).disabled = disabled;
     }
 
     pub(crate) fn set_interactive(&mut self, id: impl Into<NodeId>, interactive: bool) {
@@ -264,7 +302,7 @@ impl<A: App> Cx<A> {
         let mut next = false;
         let mut node = None;
         self.tree.traverse_depth(self.tree.get_root_id(), |id, state| {
-            if next && self.is_visible(id) && !state.disabled && state.focusable && node.is_none() {
+            if next && state.truly_visible && state.truly_enabled && state.focusable && node.is_none() {
                 node = Some(id);
             } else if let Some(focused_id) = self.focused_component
                 && focused_id == id

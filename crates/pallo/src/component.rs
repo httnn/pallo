@@ -4,9 +4,13 @@ use crate::{App, Canvas, Cx, Event, Grid, PointerState, Property, PropertyId, Pr
 
 pub struct ComponentState<A: App> {
     pub(crate) visible: bool,
+    // true only if all ancestors are visible
+    pub(crate) truly_visible: bool,
     pub(crate) focusable: bool,
     pub(crate) hoverable: bool,
-    pub(crate) disabled: bool,
+    pub(crate) enabled: bool,
+    // true only if all ancestors are enabled
+    pub(crate) truly_enabled: bool,
     pub(crate) bounds: Rect,
     pub(crate) clips_children: bool,
     pub(crate) needs_relayout: bool,
@@ -18,8 +22,10 @@ impl<A: App> Default for ComponentState<A> {
     fn default() -> Self {
         Self {
             visible: true,
+            truly_visible: true,
             focusable: false,
-            disabled: false,
+            enabled: true,
+            truly_enabled: true,
             hoverable: false,
             clips_children: true,
             bounds: Rect::default(),
@@ -48,8 +54,8 @@ macro_rules! component_methods {
         }
 
         #[inline]
-        fn set_disabled(&self, cx: &mut Cx<A>, disabled: bool) {
-            cx.set_disabled(self.$get_id(), disabled);
+        fn set_enabled(&self, cx: &mut Cx<A>, enabled: bool) {
+            cx.set_enabled(self.$get_id(), enabled);
         }
 
         #[inline]
@@ -98,8 +104,8 @@ macro_rules! component_methods {
         }
 
         #[inline]
-        fn is_disabled(&self, cx: &Cx<A>) -> bool {
-            Cx::is_disabled(&cx.tree, self.$get_id())
+        fn is_enabled(&self, cx: &Cx<A>) -> bool {
+            Cx::is_enabled(&cx.tree, self.$get_id())
         }
 
         #[inline]
