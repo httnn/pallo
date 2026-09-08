@@ -6,7 +6,7 @@ use crate::{File, IntPoint, WindowEvent, int_point};
 use skia_safe::{
     ColorSpace, ColorType, Surface,
     gpu::{
-        BackendRenderTarget, DirectContext, FlushInfo, Protected, SurfaceOrigin, SyncCpu,
+        DirectContext, FlushInfo, Protected, SurfaceOrigin, SyncCpu,
         d3d::{BackendContext, ID3D12CommandQueue, ID3D12Resource, TextureResourceInfo},
         surfaces::wrap_backend_render_target,
     },
@@ -248,14 +248,12 @@ impl super::Frame for Frame {
     }
 }
 
-const BUFFER_COUNT: u32 = 2;
-
 pub struct Platform {
     hwnd: HWND,
     gr_context: DirectContext,
     swap_chain: IDXGISwapChain3,
     swap_chain_desc: DXGI_SWAP_CHAIN_DESC1,
-    swap_chain_waitable: HANDLE,
+    _swap_chain_waitable: HANDLE,
     pub command_queue: ID3D12CommandQueue,
     buffers: Vec<ID3D12Resource>,
     surfaces: Vec<Option<Surface>>,
@@ -267,8 +265,6 @@ pub struct Platform {
     size: IntPoint,
     clipboard: WindowsClipboard,
     _backend_context: BackendContext,
-    #[cfg(feature = "gpu_profiling")]
-    pub device: ID3D12Device,
     _adapter: IDXGIAdapter1,
     _composition_device: IDCompositionDevice,
     _target: IDCompositionTarget,
@@ -403,17 +399,7 @@ impl PlatformCommon for Platform {
 impl Platform {
     pub fn new_from_window_handle(hwnd: *mut c_void) -> Self {
         let hwnd = HWND(hwnd as *mut _);
-        #[cfg(feature = "d3d_debug")]
-        let dxgi_factory: IDXGIFactory2 = unsafe {
-            let mut debug_controller: Option<ID3D12Debug> = None;
-            D3D12GetDebugInterface(&mut debug_controller).expect("Failed to create Direct3D debug controller");
 
-            debug_controller.expect("Failed to enable debug layer").EnableDebugLayer();
-
-            CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG).expect("Failed to create DXGI factory")
-        };
-
-        #[cfg(not(feature = "d3d_debug"))]
         let dxgi_factory: IDXGIFactory2 = unsafe { CreateDXGIFactory1().expect("Failed to create DXGI factory") };
 
         let adapter = get_hardware_adapter(&dxgi_factory).expect("Failed to find any suitable Direct3D 12 adapters");
@@ -494,18 +480,17 @@ impl Platform {
             memory_allocator: None,
             protected_context: Protected::No,
         };
-        let gr_context =
-            unsafe { DirectContext::new_d3d(&backend_context, None).expect("Failed to create Skia context") };
+        let gr_context = unsafe {
+            skia_safe::gpu::direct_contexts::make_d3d(&backend_context, None).expect("Failed to create Skia context")
+        };
 
         let mut ret = Self {
             hwnd,
             _adapter: adapter,
-            #[cfg(feature = "gpu_profiling")]
-            device,
             command_queue,
             swap_chain,
             swap_chain_desc,
-            swap_chain_waitable,
+            _swap_chain_waitable: swap_chain_waitable,
             gr_context,
             _backend_context: backend_context,
             buffers: Vec::new(),
@@ -552,7 +537,7 @@ impl Platform {
 
             let surface = wrap_backend_render_target(
                 &mut self.gr_context,
-                &BackendRenderTarget::new_d3d(size, &info),
+                &skia_safe::gpu::backend_render_targets::make_d3d(size, &info),
                 SurfaceOrigin::TopLeft,
                 ColorType::RGBA8888,
                 ColorSpace::new_srgb(),
