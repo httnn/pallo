@@ -7,7 +7,7 @@ use skia_safe::{
     canvas::SaveLayerRec,
     color_filters,
     font_arguments::{VariationPosition, variation_position::Coordinate},
-    gradient_shader::{GradientShaderColors, linear},
+    gradient::{self, Colors, Gradient, Interpolation},
     image_filters::{self, CropRect},
     path_builder::ArcSize,
     surfaces,
@@ -66,7 +66,7 @@ impl super::RendererType for Renderer {
 
     fn add_typeface(&mut self, id: impl Into<usize>, data: &[u8]) {
         let mgr = FontMgr::default();
-        self.typefaces.insert(id.into(), mgr.new_from_data(&Data::new_copy(data), None).unwrap());
+        self.typefaces.insert(id.into(), mgr.new_from_data(Data::new_copy(data), None).unwrap());
     }
 
     fn create_font(&self, id: impl Into<usize>, font_size: f32, variables: Vec<FontVariable>) -> Font {
@@ -586,12 +586,17 @@ impl Canvas<'_> {
             }
             Fill::Gradient(gradient) => {
                 self.color(rgb(0));
-                self.paint.set_shader(linear(
+                self.paint.set_shader(gradient::shaders::linear_gradient(
                     gradient.points,
-                    GradientShaderColors::Colors(&gradient.colors.map(|c| c.into())[..gradient.num_positions as usize]),
-                    Some(&gradient.positions.map(|p| p)[..gradient.num_positions as usize]),
-                    skia_safe::TileMode::Clamp,
-                    None,
+                    &Gradient::new(
+                        Colors::new(
+                            &gradient.colors.map(|c| c.into())[..gradient.num_positions as usize],
+                            Some(&gradient.positions.map(|p| p)[..gradient.num_positions as usize]),
+                            skia_safe::TileMode::Clamp,
+                            None,
+                        ),
+                        Interpolation::default(),
+                    ),
                     None,
                 ));
             }
