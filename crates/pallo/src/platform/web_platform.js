@@ -72,7 +72,7 @@ export function trigger_file_input(callback) {
 }
 
 export function create_canvas_internal(ui, width, height) {
-  const supportsTouch = 'ontouchstart' in window;
+  const supportsTouch = navigator.maxTouchPoints > 0;
 
   const canvasNode = ui.get_view().canvas;
   ui.get_view().resize(width, height);

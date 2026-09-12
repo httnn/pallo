@@ -321,4 +321,9 @@ impl PlatformCommon for Platform {
     }
 
     fn end_frame(&mut self, frame: Self::Frame) {}
+
+    fn supports_touch(&self) -> bool {
+        let window = window().expect("should have a window in this context");
+        window.navigator().max_touch_points() > 0
+    }
 }

@@ -33,6 +33,7 @@ pub trait Frame {
 
 pub trait PlatformCommon {
     type Frame: Frame;
+    fn supports_touch(&self) -> bool;
     fn open_url(&self, url: impl Into<String>);
     fn open_path_in_file_explorer(&self, path: PathBuf);
     fn file_open_dialog(&self, opts: FileOpenOptions);

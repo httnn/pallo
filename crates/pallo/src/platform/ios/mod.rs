@@ -378,6 +378,10 @@ impl PlatformCommon for Platform {
             ffi::objc_autoreleasePoolPop(frame.autoreleasepool);
         }
     }
+
+    fn supports_touch(&self) -> bool {
+        true
+    }
 }
 
 impl Platform {

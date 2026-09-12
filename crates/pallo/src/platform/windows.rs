@@ -394,6 +394,10 @@ impl PlatformCommon for Platform {
         // }
         self.swap_buffers();
     }
+
+    fn supports_touch(&self) -> bool {
+        false
+    }
 }
 
 impl Platform {
