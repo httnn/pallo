@@ -446,8 +446,7 @@ impl TextInput {
             self.edited_text.set(self.label.text.get_text().clone());
             #[allow(unused)]
             let val = self.prompt_value.clone();
-            #[cfg(target_os = "ios")]
-            {
+            if cx.platform.supports_touch() {
                 cx.platform.open_prompt(
                     "Edit value".into(),
                     "Enter".into(),
