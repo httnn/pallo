@@ -1,3 +1,4 @@
+use keyboard_types::NamedKey;
 use web_time::Instant;
 
 use crate::{
@@ -574,7 +575,7 @@ impl TextInput {
             Event::Keydown { key, captured } => {
                 if self.is_focused(cx) {
                     match key {
-                        Key::Enter => {
+                        Key::Named(NamedKey::Enter) => {
                             *captured = true;
                             if !self.is_editing.get_fast() {
                                 self.start_edit(cx);
@@ -583,15 +584,15 @@ impl TextInput {
                                 return Some(self.edited_text.get_fast());
                             }
                         }
-                        Key::Escape => {
+                        Key::Named(NamedKey::Escape) => {
                             self.is_editing.set(false);
                             *captured = true;
                         }
-                        Key::ArrowLeft => {
+                        Key::Named(NamedKey::ArrowLeft) => {
                             self.move_caret(if cx.mods.meta { 0 } else { self.caret_index - 1 }, !cx.mods.shift);
                             *captured = true;
                         }
-                        Key::ArrowRight => {
+                        Key::Named(NamedKey::ArrowRight) => {
                             self.move_caret(
                                 if cx.mods.meta {
                                     self.get_text().len() as i32
@@ -602,15 +603,15 @@ impl TextInput {
                             );
                             *captured = true;
                         }
-                        Key::ArrowUp => {
+                        Key::Named(NamedKey::ArrowUp) => {
                             self.move_caret(self.edited_text.get_fast().len() as i32, !cx.mods.shift);
                             *captured = true;
                         }
-                        Key::ArrowDown => {
+                        Key::Named(NamedKey::ArrowDown) => {
                             self.move_caret(0, !cx.mods.shift);
                             *captured = true;
                         }
-                        Key::Backspace => {
+                        Key::Named(NamedKey::Backspace) => {
                             if self.anchor_index != self.caret_index {
                                 self.remove_selected_text();
                             } else if self.caret_index > 0 && !self.readonly {
@@ -651,7 +652,7 @@ impl TextInput {
                         }
                         _ => {}
                     }
-                } else if let Key::Enter = key
+                } else if let Key::Named(NamedKey::Enter) = key
                     && self.is_focused(cx)
                     && !self.is_editing.get_fast()
                 {

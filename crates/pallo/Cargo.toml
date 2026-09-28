@@ -6,10 +6,13 @@ license = "MIT"
 authors = ["Max Huttunen"]
 description = "An uncomplicated and flexible UI library."
 
+[features]
+baseview = ["dep:baseview"]
+
 [dependencies]
 anyhow = "1.0.83"
 itertools = "0.15.0"
-keyboard-types = "0.6.2"
+keyboard-types = "0.8.3"
 parking_lot = "0.12"
 rustc-hash = "2.0.0"
 wasm-bindgen = "0.2.108"
@@ -18,13 +21,10 @@ web-time = "1.1.0"
 palette = "0.7.5"
 pallo_macro = { path = "../pallo_macro" }
 pallo-util = { path = "../pallo_util" }
+baseview = { version = "0.3.4", optional = true }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 open = "5.3.0"
-# nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
-# nih_plug = { path = "../../../nih-plug" }
-# baseview = { git = "https://github.com/RustAudio/baseview" }
-# baseview = { path = "../../../baseview" }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 skia-safe = { version = "0.153.3", features = ["metal", "ganesh"] }

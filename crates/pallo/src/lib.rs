@@ -1,7 +1,7 @@
 pub mod animation;
 
-// #[cfg(any(target_os = "macos", target_os = "windows"))]
-// pub mod baseview;
+#[cfg(feature = "baseview")]
+pub mod baseview_windowhandler;
 
 pub mod platform;
 
@@ -38,12 +38,15 @@ pub use crate::{
     ui::*,
     utils::*,
 };
-pub use keyboard_types::Key;
+pub use keyboard_types::{Key, NamedKey};
 pub use palette;
 pub use pallo_macro::*;
 pub use pallo_util::*;
 pub use platform::{Clipboard, FileOpenOptions, FileSaveOptions, InputType, Platform, PlatformCommon};
 pub use rustc_hash::FxHashMap;
+
+#[cfg(feature = "baseview")]
+pub use baseview;
 
 #[cfg(target_family = "wasm")]
 pub use platform::create_canvas;

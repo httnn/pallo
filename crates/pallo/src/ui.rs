@@ -71,6 +71,8 @@ pub struct UI<A: App> {
     in_draw: bool,
 }
 
+unsafe impl<A: App> Send for UI<A> {}
+
 impl<A: App> UI<A> {
     pub fn new<R: Component<A> + 'static>(
         init: A::AppInit,
@@ -243,6 +245,10 @@ impl<A: App> UI<A> {
 
     pub fn should_resize_to(&mut self) -> Option<IntPoint> {
         self.ui_context.resize.take()
+    }
+
+    pub fn get_size(&self) -> IntPoint {
+        self.last_window_size
     }
 
     pub fn on_event(&mut self, event: WindowEvent) -> EventStatus {
