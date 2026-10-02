@@ -1,5 +1,5 @@
 use crate::{App, Point, PointerId, UI, point, ui};
-use baseview::dpi::{PhysicalSize, Size};
+use baseview::dpi::LogicalSize;
 use baseview::{DropData, Event, EventStatus, MouseEvent, ScrollDelta, WindowContext, WindowEvent, WindowHandler};
 use keyboard_types::KeyState;
 use std::cell::RefCell;
@@ -12,7 +12,9 @@ pub struct PalloWindowHandler<A: App> {
 }
 
 impl<A: App> PalloWindowHandler<A> {
-    pub fn new(ui: UI<A>, window_context: WindowContext) -> Self {
+    pub fn new(mut ui: UI<A>, window_context: WindowContext) -> Self {
+        let size = window_context.size().logical;
+        ui.on_event(crate::WindowEvent::Resized((size.width as i32, size.height as i32).into()));
         Self { ui: RefCell::new(ui), window_context, mouse_pos: RefCell::new(Point::default()) }
     }
 }
@@ -28,10 +30,13 @@ impl From<crate::event::EventStatus> for baseview::EventStatus {
 
 impl<A: App> WindowHandler for PalloWindowHandler<A> {
     fn on_frame(&self) -> core::result::Result<(), baseview::HandlerError> {
-        self.ui.borrow_mut().draw();
-
-        if let Some(new_size) = self.ui.borrow_mut().should_resize_to() {
-            let _ = self.window_context.resize(Size::Physical(PhysicalSize::new(new_size.x as u32, new_size.y as u32)));
+        let new_size = {
+            let mut ui = self.ui.borrow_mut();
+            ui.draw();
+            ui.should_resize_to()
+        };
+        if let Some(new_size) = new_size {
+            let _ = self.window_context.resize(LogicalSize::new(new_size.x as u32, new_size.y as u32));
         }
         Ok(())
     }
@@ -41,7 +46,7 @@ impl<A: App> WindowHandler for PalloWindowHandler<A> {
         match event {
             Event::Mouse(event) => match event {
                 MouseEvent::CursorMoved { position, modifiers: _ } => {
-                    *self.mouse_pos.borrow_mut() = point(position.x as f32, position.y as f32);
+                    *self.mouse_pos.borrow_mut() = point(position.x as f32, position.y as f32) / 2.0;
                     return ui
                         .on_event(ui::WindowEvent::PointerMove {
                             position: *self.mouse_pos.borrow(),
@@ -147,7 +152,7 @@ impl<A: App> WindowHandler for PalloWindowHandler<A> {
     fn resized(&self, new_size: baseview::WindowSize) -> core::result::Result<(), baseview::HandlerError> {
         self.ui
             .borrow_mut()
-            .on_event(ui::WindowEvent::Resized((new_size.physical.width, new_size.physical.height).into()));
+            .on_event(ui::WindowEvent::Resized((new_size.logical.width as i32, new_size.logical.height as i32).into()));
         Ok(())
     }
 }
