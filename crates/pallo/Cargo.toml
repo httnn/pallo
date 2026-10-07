@@ -21,7 +21,7 @@ web-time = "1.1.0"
 palette = "0.7.5"
 pallo_macro = { path = "../pallo_macro" }
 pallo-util = { path = "../pallo_util" }
-baseview = { version = "0.3.4", optional = true }
+baseview = { version = "0.4.0", optional = true }
 
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 open = "5.3.0"

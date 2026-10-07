@@ -29,7 +29,7 @@ impl From<crate::event::EventStatus> for baseview::EventStatus {
 }
 
 impl<A: App> WindowHandler for PalloWindowHandler<A> {
-    fn on_frame(&self) -> core::result::Result<(), baseview::HandlerError> {
+    fn draw(&self) -> Result<(), baseview::HandlerError> {
         let new_size = {
             let mut ui = self.ui.borrow_mut();
             ui.draw();
@@ -38,6 +38,7 @@ impl<A: App> WindowHandler for PalloWindowHandler<A> {
         if let Some(new_size) = new_size {
             let _ = self.window_context.resize(LogicalSize::new(new_size.x as u32, new_size.y as u32));
         }
+        self.window_context.request_redraw();
         Ok(())
     }
 
