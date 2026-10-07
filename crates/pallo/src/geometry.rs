@@ -230,6 +230,18 @@ impl Margin {
     pub fn top(top: f32) -> Self {
         Margin { top, ..Default::default() }
     }
+
+    pub fn left(left: f32) -> Self {
+        Margin { left, ..Default::default() }
+    }
+
+    pub fn right(right: f32) -> Self {
+        Margin { right, ..Default::default() }
+    }
+
+    pub fn bottom(bottom: f32) -> Self {
+        Margin { bottom, ..Default::default() }
+    }
 }
 
 #[derive(Copy, Clone)]
