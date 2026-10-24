@@ -184,7 +184,24 @@ fn parse_svg_path(d: impl Into<String>) -> Result<Vec<SvgPathCommand>, String> {
                     });
                 }
             }
-            Token::Command('Z') => {
+            Token::Command('Q') | Token::Command('q') => {
+                while let Some([cp_x, cp_y, pt_x, pt_y]) = get_n_numbers(&mut iter) {
+                    let start = p;
+                    let mut cp = point(cp_x, cp_y);
+                    let mut end = point(pt_x, pt_y);
+                    if token.is_relative() {
+                        cp += start;
+                        end += start;
+                    }
+                    p = end;
+
+                    const K: f32 = 2.0 / 3.0;
+                    let cp1 = point(start.x + K * (cp.x - start.x), start.y + K * (cp.y - start.y));
+                    let cp2 = point(end.x + K * (cp.x - end.x), end.y + K * (cp.y - end.y));
+                    commands.push(SvgPathCommand::Bezier { cp1, cp2, point: end });
+                }
+            }
+            Token::Command('Z') | Token::Command('z') => {
                 commands.push(SvgPathCommand::ClosePath);
             }
             Token::Command(c) => {
